@@ -106,7 +106,7 @@ alias s="source ~/.zshrc"
 alias vz="vim ~/.zshrc"
 
 # .zshrc Visual Studio Code로 열기
-alias cz="code ~/.zshrc"
+alias cz="code ~/settings"
 
 # skim 기본 명령어 변경
 # brew install sk
