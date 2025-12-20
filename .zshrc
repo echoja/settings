@@ -1,5 +1,5 @@
-# Amazon Q pre block. Keep at the top of this file.
-[[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh"
+# Kiro CLI pre block. Keep at the top of this file.
+[[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.pre.zsh"
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -55,7 +55,7 @@ eval "$(direnv hook zsh)"
 export PATH="$PATH:/opt/homebrew/opt/ruby/bin:$HOME/bin:$HOME/.yarn/bin:$HOME/.local/bin:$HOME/Library/Android/sdk/platform-tools:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:/Applications"
 
 # go (https://go.dev/doc/install)
-export PATH="/usr/local/go/bin:$PATH"
+export PATH="/usr/local/go/bin:$(go env GOPATH)/bin:$PATH"
 
 # ##############################################################################
 # ######## 사용자정의 alias 또는 function 추가 #################################
@@ -97,7 +97,7 @@ alias c="curlie"
 
 # codex
 # brew install codex
-alias cdx="codex -m gpt-5-codex -c model_reasoning_effort=high --search"
+alias cdx="codex -m gpt-5.2-codex -c model_reasoning_effort=xhigh --enable web_search_request"
 
 # source
 alias s="source ~/.zshrc"
@@ -134,6 +134,7 @@ alias vi="nvim"
 
 # brew install television 텍스트 fuzzy search
 alias tt="tv text"
+# eval "$(tv init zsh)"
 
 # zoxide: cd 더 나은 버전
 # brew install zoxide
@@ -238,5 +239,5 @@ esac
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-# Amazon Q post block. Keep at the bottom of this file.
-[[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
+# Kiro CLI post block. Keep at the bottom of this file.
+[[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh"
