@@ -35,9 +35,6 @@ plugins=(git zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
 
-# asdf
-. "$HOME/.asdf/asdf.sh"
-
 
 # fzf
 # brew install fzf
@@ -88,7 +85,7 @@ alias k="kubectl"
 alias kx="kubectx"
 
 # pnpm
-# asdf로 설치
+# https://pnpm.io/installation
 alias p="pnpm"
 
 # curl 대안
