@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: no-hardcoded-home-paths
+        name: Prevent hardcoded home paths in .zshrc
+        entry: scripts/check-hardcoded-home-paths.sh
+        language: system
+        files: (^|/)\.zshrc$
