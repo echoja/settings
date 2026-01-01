@@ -191,10 +191,10 @@ alias delcert="yarn config delete cafile --global ; npm config --location=global
 function killport {
     readonly port=${1:?"The port must be specified."}
     readonly head=$(lsof -i tcp:"$port" | head -n 1)
-    readonly gl=$(lsof -i tcp:"$port" | grep LISTEN)
+    readonly gl=$(lsof -i tcp:"$port" | rg LISTEN)
     echo $head
     echo $gl
-    echo $gl | awk '{print $2}' | xargs kill -9
+    echo $gl | choose 1 | xargs kill -9
 }
  
 alias killnode="ps -e | rg /bin/node | choose 0 | xargs kill -9"
