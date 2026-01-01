@@ -2,26 +2,14 @@
 import os
 import re
 import shutil
-import sys
+from typing import Optional
+
+import typer
+
+app = typer.Typer(add_completion=False)
 
 
-def usage() -> str:
-    return """Usage: check-zshrc-deps.sh [path-to-zshrc] [--all]
-
-Checks for tools and paths referenced by a .zshrc file.
-
-Options:
-  --all   Check all known items, even if not found in the .zshrc
-  -h, --help  Show this help
-
-Examples:
-  scripts/check-zshrc-deps.sh
-  scripts/check-zshrc-deps.sh ~/.zshrc
-  scripts/check-zshrc-deps.sh --all
-"""
-
-
-def find_zshrc_path(arg_path: str) -> str:
+def find_zshrc_path(arg_path: Optional[str]) -> str:
     if arg_path:
         return arg_path
 
@@ -34,8 +22,8 @@ def find_zshrc_path(arg_path: str) -> str:
     if os.path.isfile(home_zshrc):
         return home_zshrc
 
-    print("error: .zshrc not found. Provide a path or set ZSHRC_PATH.")
-    sys.exit(2)
+    typer.echo("error: .zshrc not found. Provide a path or set ZSHRC_PATH.")
+    raise typer.Exit(2)
 
 
 def has_pattern(pattern: str, zshrc_path: str) -> bool:
@@ -53,48 +41,36 @@ def has_pattern(pattern: str, zshrc_path: str) -> bool:
     return False
 
 
-def main() -> int:
-    check_all = False
-    zshrc_path = ""
-
-    for arg in sys.argv[1:]:
-        if arg == "--all":
-            check_all = True
-        elif arg in ("-h", "--help"):
-            print(usage(), end="")
-            return 0
-        else:
-            if not zshrc_path:
-                zshrc_path = arg
-            else:
-                print(f"error: unexpected argument: {arg}")
-                print(usage(), end="")
-                return 2
-
+@app.command()
+def main(
+    zshrc_path: Optional[str] = typer.Argument(
+        None, help="Path to .zshrc (defaults to ./.zshrc or ~/.zshrc)"
+    )
+) -> None:
     zshrc_path = find_zshrc_path(zshrc_path)
     if not os.path.isfile(zshrc_path):
-        print(f"error: .zshrc not found at: {zshrc_path}")
-        return 2
+        typer.echo(f"error: .zshrc not found at: {zshrc_path}")
+        raise typer.Exit(2)
 
     counts = {"ok": 0, "missing": 0, "warn": 0, "skipped": 0}
 
     def report_ok(message: str) -> None:
-        print(f"OK      {message}")
+        typer.echo(f"OK      {message}")
         counts["ok"] += 1
 
     def report_missing(message: str) -> None:
-        print(f"MISSING {message}")
+        typer.echo(f"MISSING {message}")
         counts["missing"] += 1
 
     def report_warn(message: str) -> None:
-        print(f"WARN    {message}")
+        typer.echo(f"WARN    {message}")
         counts["warn"] += 1
 
     def report_skip(message: str) -> None:
-        print(f"SKIP    {message}")
+        typer.echo(f"SKIP    {message}")
         counts["skipped"] += 1
 
-    def check_cmd(label, cmd, hint):
+    def check_cmd(label: str, cmd: str, hint: Optional[str]) -> None:
         msg = f"command: {cmd}"
         if hint:
             msg = f"{msg} (used by: {hint})"
@@ -103,7 +79,7 @@ def main() -> int:
         else:
             report_missing(f"{label} - {msg}")
 
-    def check_dir(label, path, hint):
+    def check_dir(label: str, path: str, hint: Optional[str]) -> None:
         msg = f"dir: {path}"
         if hint:
             msg = f"{msg} (used by: {hint})"
@@ -112,7 +88,7 @@ def main() -> int:
         else:
             report_missing(f"{label} - {msg}")
 
-    def check_file(label, path, hint):
+    def check_file(label: str, path: str, hint: Optional[str]) -> None:
         msg = f"file: {path}"
         if hint:
             msg = f"{msg} (used by: {hint})"
@@ -121,7 +97,9 @@ def main() -> int:
         else:
             report_missing(f"{label} - {msg}")
 
-    def check_file_or_cmd(label, path, cmd, hint):
+    def check_file_or_cmd(
+        label: str, path: str, cmd: str, hint: Optional[str]
+    ) -> None:
         msg = f"file: {path}"
         if hint:
             msg = f"{msg} (used by: {hint})"
@@ -135,11 +113,17 @@ def main() -> int:
         else:
             report_missing(f"{label} - {msg}")
 
-    def run_check(label, pattern, kind, target, hint, cmd=None):
-        if not check_all and pattern:
-            if not has_pattern(pattern, zshrc_path):
-                report_skip(f"{label} - not referenced in .zshrc")
-                return
+    def run_check(
+        label: str,
+        pattern: str,
+        kind: str,
+        target: str,
+        hint: Optional[str],
+        cmd: Optional[str] = None,
+    ) -> None:
+        if pattern and not has_pattern(pattern, zshrc_path):
+            report_skip(f"{label} - not referenced in .zshrc")
+            return
 
         if kind == "command":
             check_cmd(label, target, hint)
@@ -150,8 +134,8 @@ def main() -> int:
         elif kind == "file_or_cmd":
             check_file_or_cmd(label, target, cmd or target, hint)
         else:
-            print(f"error: unknown check kind: {kind}")
-            sys.exit(2)
+            typer.echo(f"error: unknown check kind: {kind}")
+            raise typer.Exit(2)
 
     home = os.path.expanduser("~")
     checks = [
@@ -269,21 +253,20 @@ def main() -> int:
         ("choose", "choose 0", "command", "choose", "killnode alias uses choose", None),
     ]
 
-    print(f"Checking dependencies from: {zshrc_path}")
+    typer.echo(f"Checking dependencies from: {zshrc_path}")
     for label, pattern, kind, target, hint, cmd in checks:
         run_check(label, pattern, kind, target, hint, cmd)
 
-    print("")
-    print(
+    typer.echo("")
+    typer.echo(
         "Summary: ok={ok} missing={missing} warn={warn} skipped={skipped}".format(
             **counts
         )
     )
 
     if counts["missing"] > 0:
-        return 1
-    return 0
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    app()
