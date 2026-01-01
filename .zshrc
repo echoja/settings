@@ -200,7 +200,7 @@ function killport {
 alias killnode="ps -e | rg /bin/node | choose 0 | xargs kill -9"
 
 # pnpm  
-# export PNPM_HOME="/Users/th.kim/Library/pnpm"
+# export PNPM_HOME="$HOME/Library/pnpm"
 # export PATH="$PNPM_HOME:$PATH"
 
 # postgresql
@@ -217,12 +217,12 @@ export GPG_TTY=$(tty)
 
 
 # Added by Windsurf
-export PATH="/Users/th.kim/.codeium/windsurf/bin:$PATH"
+export PATH="$HOME/.codeium/windsurf/bin:$PATH"
 
 
 
 # pnpm
-export PNPM_HOME="/Users/th.kim/Library/pnpm"
+export PNPM_HOME="$HOME/Library/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
@@ -230,7 +230,7 @@ esac
 # pnpm end
 
 # bun completions
-[ -s "/Users/th.kim/.bun/_bun" ] && source "/Users/th.kim/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
