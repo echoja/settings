@@ -254,7 +254,9 @@ def main(
     ]
 
     typer.echo(f"Checking dependencies from: {zshrc_path}")
-    for label, pattern, kind, target, hint, cmd in checks:
+    for label, pattern, kind, target, hint, cmd in sorted(
+        checks, key=lambda item: item[0].casefold()
+    ):
         run_check(label, pattern, kind, target, hint, cmd)
 
     typer.echo("")
