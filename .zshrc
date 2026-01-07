@@ -229,6 +229,11 @@ export GPG_TTY=$(tty)
 # Added by Windsurf
 export PATH="$HOME/.codeium/windsurf/bin:$PATH"
 
+# mcp-proxy (The mcp-proxy is a tool that lets you switch between server transports.)
+# installation: uv tool install mcp-proxy
+# url: https://github.com/sparfenyuk/mcp-proxy
+export MCP_PROXY_HOME="$HOME/.mcp-proxy"
+
 
 
 # pnpm
