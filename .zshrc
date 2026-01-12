@@ -168,6 +168,10 @@ function glr() {
   echo 'git pull origin $(git_main_branch) --rebase --no-edit' && git pull origin $(git_main_branch) --rebase --no-edit
 }
 
+function gcib() {
+  echo 'gc --allow-empty -m "init branch"' && git commit --allow-empty -m "init branch"
+}
+
 # git pull origin ${branch} --no-rebase --no-edit
 # function glone() {
 #   echo 'git pull origin $1 --no-rebase --no-edit' && git pull origin $1 --no-rebase --no-edit
