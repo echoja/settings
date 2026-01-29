@@ -9,6 +9,8 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+export HISTSIZE=1000000
+export SAVEHIST=1000000
 
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -47,6 +49,8 @@ source <(fzf --zsh)
 
 # direnv
 eval "$(direnv hook zsh)"
+
+# brew install tree
 
 
 
@@ -138,6 +142,9 @@ export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
 export LC_MESSAGES="en_US.UTF-8"
 alias vim="nvim"
 alias vi="nvim"
+
+# tailscale 앱스토어로 깔았을 시
+alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 
 # brew install television 텍스트 fuzzy search
 alias tt="tv text"
