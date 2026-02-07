@@ -150,6 +150,8 @@ alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 alias tt="tv text"
 # eval "$(tv init zsh)"
 
+alias jenkins="java -jar ~/jenkins-cli.jar -s https://jenkins.test.purple.io/ -ssh -user echoja"
+
 # zoxide: cd 더 나은 버전
 # brew install zoxide
 eval "$(zoxide init zsh)"
@@ -165,6 +167,8 @@ function gfdp() {
   echo "$target_branch 를 가져옵니다."
   git fetch origin $target_branch:$target_branch
 }
+
+
 
 # git pull
 function glm() {
@@ -247,7 +251,8 @@ export PATH="$HOME/.codeium/windsurf/bin:$PATH"
 # url: https://github.com/sparfenyuk/mcp-proxy
 export MCP_PROXY_HOME="$HOME/.mcp-proxy"
 
-
+# rust
+# https://rust-lang.org/tools/install/
 
 # pnpm
 export PNPM_HOME="$HOME/Library/pnpm"
