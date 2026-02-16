@@ -36,35 +36,35 @@ def available_items() -> list[LinkItem]:
     home = Path.home()
     return [
         LinkItem(
-            key="zshrc",
+            key=".zshrc",
             title=".zshrc",
             description="Zsh config",
             source=root / ".zshrc",
             target=home / ".zshrc",
         ),
         LinkItem(
-            key="codex-config",
+            key=".codex/config.toml",
             title=".codex/config.toml",
             description="Codex CLI config",
             source=root / ".codex" / "config.toml",
             target=home / ".codex" / "config.toml",
         ),
         LinkItem(
-            key="claude-settings",
+            key=".claude/settings.json",
             title=".claude/settings.json",
             description="Claude Code settings",
             source=root / ".claude" / "settings.json",
             target=home / ".claude" / "settings.json",
         ),
         LinkItem(
-            key="claude-notify",
+            key=".claude/notify.sh",
             title=".claude/notify.sh",
             description="Claude Code stop-hook notification script",
             source=root / ".claude" / "notify.sh",
             target=home / ".claude" / "notify.sh",
         ),
         LinkItem(
-            key="claude-md",
+            key=".claude/CLAUDE.md",
             title=".claude/CLAUDE.md",
             description="User-scope Claude Code instructions",
             source=root / ".claude" / "CLAUDE.md",
@@ -73,41 +73,19 @@ def available_items() -> list[LinkItem]:
     ]
 
 
-def alias_map() -> dict[str, str]:
-    return {
-        "z": "zshrc",
-        ".zshrc": "zshrc",
-        "codex": "codex-config",
-        "codex-config.toml": "codex-config",
-        ".codex/config.toml": "codex-config",
-        "claude": "claude-settings",
-        "claude-settings.json": "claude-settings",
-        ".claude/settings.json": "claude-settings",
-        "notify": "claude-notify",
-        "notify.sh": "claude-notify",
-        ".claude/notify.sh": "claude-notify",
-        "claude-md": "claude-md",
-        "CLAUDE.md": "claude-md",
-        ".claude/CLAUDE.md": "claude-md",
-    }
-
-
 def resolve_items(keys: Iterable[str], use_all: bool) -> list[LinkItem]:
     items = available_items()
     if use_all:
         return items
 
     lookup = {item.key: item for item in items}
-    aliases = alias_map()
     chosen: list[LinkItem] = []
     unknown: list[str] = []
 
     for raw in keys:
-        key = raw.strip().lower()
+        key = raw.strip()
         if key in lookup:
             item = lookup[key]
-        elif key in aliases:
-            item = lookup[aliases[key]]
         else:
             unknown.append(raw)
             continue
@@ -178,7 +156,7 @@ def print_status(items: Iterable[LinkItem]) -> None:
         status, detail = status_of(item)
         label = status_label(status)
         detail_text = f" ({detail})" if detail else ""
-        typer.echo(f"{label:<7} {item.key:<12} {link_target_summary(item)}{detail_text}")
+        typer.echo(f"{label:<7} {item.key:<22} {link_target_summary(item)}{detail_text}")
 
 
 def ensure_parent_dir(path: Path, dry_run: bool) -> None:
@@ -244,16 +222,16 @@ def link_items(
         status, detail = status_of(item)
         if status == "missing-source":
             typer.echo(
-                f"ERROR   {item.key:<12} source missing: {display_path(item.source)}"
+                f"ERROR   {item.key:<22} source missing: {display_path(item.source)}"
             )
             had_errors = True
             continue
         if status == "linked":
-            typer.echo(f"SKIP    {item.key:<12} already linked")
+            typer.echo(f"SKIP    {item.key:<22} already linked")
             continue
         if status == "target-dir":
             typer.echo(
-                f"ERROR   {item.key:<12} target is a directory: {display_path(item.target)}"
+                f"ERROR   {item.key:<22} target is a directory: {display_path(item.target)}"
             )
             had_errors = True
             continue
@@ -262,17 +240,17 @@ def link_items(
         if item.target.exists() or item.target.is_symlink():
             if mode == ReplaceMode.safe:
                 typer.echo(
-                    f"SKIP    {item.key:<12} target exists (use --mode backup/force)"
+                    f"SKIP    {item.key:<22} target exists (use --mode backup/force)"
                 )
                 continue
             backup = remove_target(item.target, mode=mode, dry_run=dry_run)
 
         if backup and not dry_run:
-            typer.echo(f"BACKUP  {item.key:<12} {display_path(backup)}")
+            typer.echo(f"BACKUP  {item.key:<22} {display_path(backup)}")
 
         create_link(item, dry_run=dry_run)
         action = "DRYRUN" if dry_run else "LINKED"
-        typer.echo(f"{action:<7} {item.key:<12} {link_target_summary(item)}")
+        typer.echo(f"{action:<7} {item.key:<22} {link_target_summary(item)}")
 
     if had_errors:
         raise typer.Exit(2)
@@ -295,7 +273,7 @@ def select_items_interactively(items: list[LinkItem]) -> list[LinkItem]:
         label = status_label(status)
         detail_text = f" ({detail})" if detail else ""
         typer.echo(
-            f"{idx:>2}) {label:<7} {item.key:<12} {link_target_summary(item)}{detail_text}"
+            f"{idx:>2}) {label:<7} {item.key:<22} {link_target_summary(item)}{detail_text}"
         )
 
     prompt = "Select items [1,2/all/none]"
