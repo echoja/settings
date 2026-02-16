@@ -236,6 +236,35 @@ export PKG_CONFIG_PATH="/opt/homebrew/opt/libpq/lib/pkgconfig"
 
 alias clauded='claude --dangerously-skip-permissions'
 
+# bitwarden CLI automation
+# One-time setup: security add-generic-password -a "bitwarden" -s "bw-master" -w
+if ! security find-generic-password -a "bitwarden" -s "bw-master" &>/dev/null; then
+  echo "⚠ Bitwarden master password not in Keychain. Run:"
+  echo '  security add-generic-password -a "bitwarden" -s "bw-master" -w'
+fi
+
+function bw-unlock() {
+  if [[ -z "$BW_SESSION" ]] || ! bw unlock --check &>/dev/null; then
+    echo "Unlocking Bitwarden..."
+    export BW_SESSION=$(BW_PASSWORD=$(security find-generic-password -a "bitwarden" -s "bw-master" -w) bw unlock --raw --passwordenv BW_PASSWORD)
+  fi
+}
+
+# saml2aws login automation using Bitwarden
+# Usage: saml-login
+function saml-login() {
+  bw-unlock
+
+  local pw
+  pw=$(bw get password 33956be8-946e-4825-8cc8-aec300929057) || { echo "Failed to get password from Bitwarden"; return 1; }
+
+  echo "Logging in with default profile..."
+  SAML2AWS_PASSWORD="$pw" saml2aws login --skip-prompt
+
+  echo "Logging in with purpleio profile..."
+  SAML2AWS_PASSWORD="$pw" saml2aws login -a purpleio --skip-prompt
+}
+
 # gpg
 export GPG_TTY=$(tty)
 
@@ -276,3 +305,6 @@ export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
 # Kiro CLI post block. Keep at the bottom of this file.
 [[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh"
+
+# OpenClaw Completion
+source "${HOME}/.openclaw/completions/openclaw.zsh"

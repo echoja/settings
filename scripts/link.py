@@ -49,6 +49,27 @@ def available_items() -> list[LinkItem]:
             source=root / ".codex" / "config.toml",
             target=home / ".codex" / "config.toml",
         ),
+        LinkItem(
+            key="claude-settings",
+            title=".claude/settings.json",
+            description="Claude Code settings",
+            source=root / ".claude" / "settings.json",
+            target=home / ".claude" / "settings.json",
+        ),
+        LinkItem(
+            key="claude-notify",
+            title=".claude/notify.sh",
+            description="Claude Code stop-hook notification script",
+            source=root / ".claude" / "notify.sh",
+            target=home / ".claude" / "notify.sh",
+        ),
+        LinkItem(
+            key="claude-md",
+            title=".claude/CLAUDE.md",
+            description="User-scope Claude Code instructions",
+            source=root / ".claude" / "CLAUDE.md",
+            target=home / ".claude" / "CLAUDE.md",
+        ),
     ]
 
 
@@ -59,6 +80,15 @@ def alias_map() -> dict[str, str]:
         "codex": "codex-config",
         "codex-config.toml": "codex-config",
         ".codex/config.toml": "codex-config",
+        "claude": "claude-settings",
+        "claude-settings.json": "claude-settings",
+        ".claude/settings.json": "claude-settings",
+        "notify": "claude-notify",
+        "notify.sh": "claude-notify",
+        ".claude/notify.sh": "claude-notify",
+        "claude-md": "claude-md",
+        "CLAUDE.md": "claude-md",
+        ".claude/CLAUDE.md": "claude-md",
     }
 
 
