@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 import json
+import math
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -23,6 +25,8 @@ from rich.console import Console
 console = Console()
 
 app = typer.Typer(add_completion=False, help="Bootstrap your environment: link dotfiles, check dependencies, and more.")
+defaults_app = typer.Typer(help="Manage macOS system defaults.")
+app.add_typer(defaults_app, name="defaults")
 
 
 class ReplaceMode(str, Enum):
@@ -38,6 +42,23 @@ class LinkItem:
     description: str
     source: Path
     target: Path
+
+
+class ReadStatus(str, Enum):
+    ok = "ok"
+    key_missing = "key_missing"
+    domain_missing = "domain_missing"
+
+
+@dataclass(frozen=True)
+class DefaultEntry:
+    domain: str
+    key: str
+    type: str
+    value: object
+    description: str
+    category: str
+    restart: str | None = None
 
 
 def repo_root() -> Path:
@@ -594,20 +615,30 @@ def verify() -> None:
     else:
         console.print("[green]OK[/green]      scripts/deps.json")
         ok += 1
+
+    defaults_schema_errors = validate_defaults_schema()
+    if defaults_schema_errors:
+        for err in defaults_schema_errors:
+            console.print(f"[red]FAIL[/red]    {err}")
+            fail += 1
+    else:
+        console.print("[green]OK[/green]      scripts/macos-defaults.json")
+        ok += 1
     console.print()
 
     # 4. JSON formatting
     console.rule("[bold]JSON formatting[/bold]", align="left")
-    deps_file = repo_root() / "scripts" / "deps.json"
-    if check_json_formatting(deps_file):
-        console.print("[green]OK[/green]      scripts/deps.json")
-        ok += 1
-    else:
-        console.print(
-            "[red]FAIL[/red]    scripts/deps.json not formatted"
-            " (run: python3 -m json.tool --indent 2)"
-        )
-        fail += 1
+    for json_name in ("deps.json", "macos-defaults.json"):
+        json_file = repo_root() / "scripts" / json_name
+        if check_json_formatting(json_file):
+            console.print(f"[green]OK[/green]      scripts/{json_name}")
+            ok += 1
+        else:
+            console.print(
+                f"[red]FAIL[/red]    scripts/{json_name} not formatted"
+                " (run: python3 -m json.tool --indent 2)"
+            )
+            fail += 1
     console.print()
 
     # 5. Hardcoded home paths
@@ -680,6 +711,31 @@ def verify() -> None:
         fail += 1
     console.print()
 
+    # 8. macOS defaults
+    if platform.system() == "Darwin":
+        console.rule("[bold]macOS defaults[/bold]", align="left")
+        entries = load_defaults_entries()
+        for entry in entries:
+            st, raw = read_default(entry.domain, entry.key)
+            if st != ReadStatus.ok or raw is None:
+                console.print(
+                    f"[red]DRIFT[/red]   {entry.key} - {st.value}"
+                    f" (expected {entry.value!r})"
+                )
+                fail += 1
+                continue
+            current = parse_default_value(raw, entry.type)
+            if values_equal(current, entry.value, entry.type):
+                console.print(f"[green]OK[/green]      {entry.key} = {current!r}")
+                ok += 1
+            else:
+                console.print(
+                    f"[red]DRIFT[/red]   {entry.key}:"
+                    f" saved={entry.value!r} current={current!r}"
+                )
+                fail += 1
+        console.print()
+
     # Summary
     summary = f"[green]{ok} ok[/green]"
     if fail:
@@ -720,6 +776,278 @@ def link(
         raise typer.Exit(1)
 
     link_items(items, mode=mode, dry_run=dry_run)
+
+
+# ── macOS defaults helpers ──────────────────────────────────────────────
+
+
+def load_defaults_entries() -> list[DefaultEntry]:
+    defaults_file = repo_root() / "scripts" / "macos-defaults.json"
+    with open(defaults_file, encoding="utf-8") as f:
+        data = json.load(f)
+    return [
+        DefaultEntry(
+            domain=item["domain"],
+            key=item["key"],
+            type=item["type"],
+            value=item["value"],
+            description=item["description"],
+            category=item["category"],
+            restart=item.get("restart"),
+        )
+        for item in data["defaults"]
+    ]
+
+
+def run_defaults_cmd(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["defaults", *args],
+        capture_output=True, text=True,
+    )
+
+
+def read_default(domain: str, key: str) -> tuple[ReadStatus, str | None]:
+    r = run_defaults_cmd("read", domain, key)
+    if r.returncode != 0:
+        stderr = r.stderr.strip()
+        if "does not exist" in stderr:
+            if "domain" in stderr.split("does not exist")[0].lower():
+                return ReadStatus.domain_missing, None
+            return ReadStatus.key_missing, None
+        return ReadStatus.key_missing, None
+    return ReadStatus.ok, r.stdout.strip()
+
+
+def parse_default_value(raw: str, type_: str) -> object:
+    if type_ == "bool":
+        return raw.strip() in {"1", "true", "YES"}
+    if type_ == "int":
+        return int(raw.strip())
+    if type_ == "float":
+        return float(raw.strip())
+    return raw.strip()
+
+
+def format_write_value(value: object, type_: str) -> list[str]:
+    if type_ == "bool":
+        return ["-bool", "TRUE" if value else "FALSE"]
+    if type_ == "int":
+        return ["-int", str(value)]
+    if type_ == "float":
+        return ["-float", str(value)]
+    return ["-string", str(value)]
+
+
+def values_equal(a: object, b: object, type_: str) -> bool:
+    if type_ == "bool":
+        return bool(a) == bool(b)
+    if type_ == "float":
+        try:
+            return math.isclose(float(a), float(b), rel_tol=1e-9)
+        except (TypeError, ValueError):
+            return False
+    return a == b
+
+
+def validate_defaults_schema() -> list[str]:
+    defaults_file = repo_root() / "scripts" / "macos-defaults.json"
+    schema_file = repo_root() / "scripts" / "macos-defaults.schema.json"
+    errors: list[str] = []
+
+    try:
+        with open(defaults_file, encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        return [f"cannot load macos-defaults.json: {exc}"]
+
+    try:
+        with open(schema_file, encoding="utf-8") as f:
+            schema = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        return [f"cannot load schema: {exc}"]
+
+    if not isinstance(data, dict):
+        return ["root must be an object"]
+
+    for key in schema.get("required", []):
+        if key not in data:
+            errors.append(f"missing required key: {key}")
+
+    allowed_keys = set(schema.get("properties", {}).keys())
+    if schema.get("additionalProperties") is False:
+        for key in data:
+            if key not in allowed_keys:
+                errors.append(f"unexpected key: {key}")
+
+    defaults = data.get("defaults")
+    if defaults is not None:
+        if not isinstance(defaults, list):
+            errors.append("'defaults' must be an array")
+        else:
+            item_schema = (
+                schema.get("properties", {}).get("defaults", {}).get("items", {})
+            )
+            required_fields = item_schema.get("required", [])
+            allowed_fields = set(item_schema.get("properties", {}).keys())
+            no_additional = item_schema.get("additionalProperties") is False
+            type_enum = (
+                item_schema.get("properties", {}).get("type", {}).get("enum")
+            )
+            category_enum = (
+                item_schema.get("properties", {}).get("category", {}).get("enum")
+            )
+
+            for i, item in enumerate(defaults):
+                if not isinstance(item, dict):
+                    errors.append(f"defaults[{i}]: must be an object")
+                    continue
+                for field in required_fields:
+                    if field not in item:
+                        errors.append(f"defaults[{i}]: missing required field: {field}")
+                if no_additional:
+                    for key in item:
+                        if key not in allowed_fields:
+                            errors.append(f"defaults[{i}]: unexpected field: {key}")
+                for field, prop_schema in item_schema.get("properties", {}).items():
+                    if field not in item:
+                        continue
+                    val = item[field]
+                    if field == "value":
+                        continue
+                    if prop_schema.get("type") == "string" and not isinstance(val, str):
+                        errors.append(f"defaults[{i}].{field}: must be a string")
+                if "type" in item and type_enum and item["type"] not in type_enum:
+                    errors.append(
+                        f"defaults[{i}].type: must be one of {type_enum}, got '{item['type']}'"
+                    )
+                if "category" in item and category_enum and item["category"] not in category_enum:
+                    errors.append(
+                        f"defaults[{i}].category: must be one of {category_enum}, got '{item['category']}'"
+                    )
+
+    return errors
+
+
+# ── defaults commands ───────────────────────────────────────────────────
+
+
+@defaults_app.command("export")
+def defaults_export() -> None:
+    """Read current system values and update macos-defaults.json."""
+    if platform.system() != "Darwin":
+        console.print("[red]ERROR[/red]  This command only works on macOS")
+        raise typer.Exit(1)
+
+    defaults_file = repo_root() / "scripts" / "macos-defaults.json"
+    with open(defaults_file, encoding="utf-8") as f:
+        data = json.load(f)
+
+    updated = 0
+    for item in data["defaults"]:
+        st, raw = read_default(item["domain"], item["key"])
+        if st != ReadStatus.ok or raw is None:
+            console.print(f"[yellow]SKIP[/yellow]    {item['domain']} {item['key']} - {st.value}")
+            continue
+        current = parse_default_value(raw, item["type"])
+        if not values_equal(current, item["value"], item["type"]):
+            console.print(
+                f"[cyan]UPDATE[/cyan]  {item['key']}: {item['value']!r} -> {current!r}"
+            )
+            item["value"] = current
+            updated += 1
+
+    if updated:
+        with open(defaults_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            f.write("\n")
+        console.print(f"\n[green]Updated {updated} value(s)[/green]")
+    else:
+        console.print("[green]No updates needed[/green]")
+
+
+@defaults_app.command("apply")
+def defaults_apply(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without applying."),
+    yes: bool = typer.Option(False, "-y", "--yes", help="Skip confirmations."),
+) -> None:
+    """Apply saved defaults values to the system."""
+    if platform.system() != "Darwin":
+        console.print("[red]ERROR[/red]  This command only works on macOS")
+        raise typer.Exit(1)
+
+    entries = load_defaults_entries()
+    changes: list[DefaultEntry] = []
+
+    for entry in entries:
+        st, raw = read_default(entry.domain, entry.key)
+        if st == ReadStatus.ok and raw is not None:
+            current = parse_default_value(raw, entry.type)
+            if values_equal(current, entry.value, entry.type):
+                continue
+        changes.append(entry)
+
+    if not changes:
+        console.print("[green]All defaults already match[/green]")
+        return
+
+    for entry in changes:
+        console.print(f"  defaults write {entry.domain} {entry.key} {' '.join(format_write_value(entry.value, entry.type))}")
+
+    if dry_run:
+        console.print(f"\n[cyan]{len(changes)} change(s) would be applied[/cyan]")
+        return
+
+    if not yes:
+        if not typer.confirm(f"\nApply {len(changes)} change(s)?", default=False):
+            console.print("Aborted.")
+            return
+
+    restart_apps: set[str] = set()
+    for entry in changes:
+        args = ["write", entry.domain, entry.key, *format_write_value(entry.value, entry.type)]
+        r = run_defaults_cmd(*args)
+        if r.returncode != 0:
+            console.print(f"[red]FAIL[/red]    {entry.domain} {entry.key}: {r.stderr.strip()}")
+        else:
+            console.print(f"[green]OK[/green]      {entry.domain} {entry.key}")
+            if entry.restart:
+                restart_apps.add(entry.restart)
+
+    for app_name in sorted(restart_apps):
+        console.print(f"[cyan]Restarting {app_name}...[/cyan]")
+        subprocess.run(["killall", app_name], capture_output=True)
+
+
+@defaults_app.command("diff")
+def defaults_diff() -> None:
+    """Show differences between saved and current system values."""
+    if platform.system() != "Darwin":
+        console.print("[red]ERROR[/red]  This command only works on macOS")
+        raise typer.Exit(1)
+
+    entries = load_defaults_entries()
+    by_category: dict[str, list[DefaultEntry]] = defaultdict(list)
+    for entry in entries:
+        by_category[entry.category].append(entry)
+
+    has_diff = False
+    for category in sorted(by_category):
+        items = by_category[category]
+        for entry in items:
+            st, raw = read_default(entry.domain, entry.key)
+            if st != ReadStatus.ok or raw is None:
+                console.print(f"[yellow]MISSING[/yellow] [{category}] {entry.key} - expected {entry.value!r} ({st.value})")
+                has_diff = True
+                continue
+            current = parse_default_value(raw, entry.type)
+            if values_equal(current, entry.value, entry.type):
+                console.print(f"[green]OK[/green]      [{category}] {entry.key} = {current!r}")
+            else:
+                console.print(f"[red]DIFF[/red]    [{category}] {entry.key}: saved={entry.value!r} current={current!r}")
+                has_diff = True
+
+    if has_diff:
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

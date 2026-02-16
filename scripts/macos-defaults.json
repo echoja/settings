@@ -1,0 +1,161 @@
+{
+  "$schema": "./macos-defaults.schema.json",
+  "defaults": [
+    {
+      "domain": "com.apple.dock",
+      "key": "autohide",
+      "type": "bool",
+      "value": true,
+      "description": "Automatically hide and show the Dock",
+      "category": "dock",
+      "restart": "Dock"
+    },
+    {
+      "domain": "com.apple.dock",
+      "key": "tilesize",
+      "type": "int",
+      "value": 64,
+      "description": "Dock icon size in pixels",
+      "category": "dock",
+      "restart": "Dock"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "AppleShowAllExtensions",
+      "type": "bool",
+      "value": true,
+      "description": "Show all file extensions in Finder",
+      "category": "finder"
+    },
+    {
+      "domain": "com.apple.finder",
+      "key": "FXPreferredViewStyle",
+      "type": "string",
+      "value": "Nlsv",
+      "description": "Default Finder view style (Nlsv = list view)",
+      "category": "finder",
+      "restart": "Finder"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "InitialKeyRepeat",
+      "type": "int",
+      "value": 15,
+      "description": "Delay before key repeat starts (lower = faster)",
+      "category": "keyboard"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "KeyRepeat",
+      "type": "int",
+      "value": 2,
+      "description": "Key repeat rate (lower = faster)",
+      "category": "keyboard"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "NSAutomaticCapitalizationEnabled",
+      "type": "bool",
+      "value": false,
+      "description": "Disable automatic capitalization",
+      "category": "keyboard"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "NSAutomaticDashSubstitutionEnabled",
+      "type": "bool",
+      "value": false,
+      "description": "Disable smart dashes",
+      "category": "keyboard"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "NSAutomaticQuoteSubstitutionEnabled",
+      "type": "bool",
+      "value": false,
+      "description": "Disable smart quotes",
+      "category": "keyboard"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "NSAutomaticPeriodSubstitutionEnabled",
+      "type": "bool",
+      "value": false,
+      "description": "Disable double-space period shortcut",
+      "category": "keyboard"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "NSAutomaticSpellingCorrectionEnabled",
+      "type": "bool",
+      "value": false,
+      "description": "Disable automatic spelling correction",
+      "category": "keyboard"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "NSAutomaticInlinePredictionEnabled",
+      "type": "bool",
+      "value": false,
+      "description": "Disable inline predictive text",
+      "category": "keyboard"
+    },
+    {
+      "domain": "com.apple.AppleMultitouchTrackpad",
+      "key": "Clicking",
+      "type": "bool",
+      "value": true,
+      "description": "Enable tap to click on trackpad",
+      "category": "trackpad"
+    },
+    {
+      "domain": "com.apple.AppleMultitouchTrackpad",
+      "key": "TrackpadThreeFingerDrag",
+      "type": "bool",
+      "value": true,
+      "description": "Enable three-finger drag gesture",
+      "category": "trackpad"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "AppleShowScrollBars",
+      "type": "string",
+      "value": "WhenScrolling",
+      "description": "Show scroll bars only when scrolling",
+      "category": "global"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "AppleICUForce24HourTime",
+      "type": "bool",
+      "value": true,
+      "description": "Use 24-hour time format",
+      "category": "global"
+    },
+    {
+      "domain": "NSGlobalDomain",
+      "key": "AppleMiniaturizeOnDoubleClick",
+      "type": "bool",
+      "value": false,
+      "description": "Disable minimize on title bar double-click",
+      "category": "global"
+    },
+    {
+      "domain": "com.apple.WindowManager",
+      "key": "EnableTiledWindowMargins",
+      "type": "bool",
+      "value": false,
+      "description": "Disable margins around tiled windows",
+      "category": "window-manager"
+    },
+    {
+      "domain": "com.apple.menuextra.clock",
+      "key": "ShowSeconds",
+      "type": "bool",
+      "value": true,
+      "description": "Show seconds in menu bar clock",
+      "category": "menu-bar",
+      "restart": "ControlCenter"
+    }
+  ]
+}
