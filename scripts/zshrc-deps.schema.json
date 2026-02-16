@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "type": "object",
+  "required": ["checks"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "pattern", "kind", "target"],
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string" },
+          "pattern": { "type": "string" },
+          "kind": { "type": "string", "enum": ["command", "dir", "file"] },
+          "target": { "type": "string" }
+        }
+      }
+    }
+  }
+}
