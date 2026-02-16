@@ -18,12 +18,6 @@ KIND_PREDICATE = {
     "file": os.path.isfile,
 }
 
-KIND_PREFIX = {
-    "command": "command",
-    "dir": "dir",
-    "file": "file",
-}
-
 
 def find_zshrc_path(arg_path: Optional[str]) -> str:
     if arg_path:
@@ -104,8 +98,7 @@ def main(
             typer.echo(f"error: unknown check kind: {kind}")
             raise typer.Exit(2)
 
-        prefix = KIND_PREFIX[kind]
-        msg = f"{label} - {prefix}: {target}"
+        msg = f"{label} - {kind}: {target}"
         if predicate(target):
             report("OK", msg)
         else:
