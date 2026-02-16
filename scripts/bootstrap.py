@@ -9,7 +9,7 @@ from typing import Iterable
 
 import typer
 
-app = typer.Typer(add_completion=False, help="Link repo dotfiles into your home directory.")
+app = typer.Typer(add_completion=False, help="Bootstrap your environment: link dotfiles, check dependencies, and more.")
 
 
 class ReplaceMode(str, Enum):
