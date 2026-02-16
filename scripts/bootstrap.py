@@ -365,20 +365,6 @@ def load_dep_checks() -> list[dict]:
     return data["checks"]
 
 
-def has_pattern(pattern: str, zshrc_path: Path) -> bool:
-    try:
-        regex = re.compile(pattern)
-    except re.error:
-        return False
-    with open(zshrc_path, encoding="utf-8", errors="ignore") as f:
-        for line in f:
-            if line.lstrip().startswith("#"):
-                continue
-            if regex.search(line):
-                return True
-    return False
-
-
 def validate_deps_schema() -> list[str]:
     checks_file = repo_root() / "scripts" / "deps.json"
     schema_file = repo_root() / "scripts" / "deps.schema.json"
@@ -487,7 +473,7 @@ def status() -> None:
 @app.command()
 def verify() -> None:
     """Run all verification checks on your environment."""
-    ok = fail = skip = 0
+    ok = fail = 0
 
     # 1. Symlink health
     console.rule("[bold]Symlink health[/bold]", align="left")
@@ -504,18 +490,11 @@ def verify() -> None:
 
     # 2. Dependencies
     console.rule("[bold]Dependencies[/bold]", align="left")
-    zshrc_path = repo_root() / ".zshrc"
     checks = load_dep_checks()
     for check in sorted(checks, key=lambda c: c["label"].casefold()):
         label = check["label"]
-        pattern = check.get("pattern")
         kind = check["kind"]
         target = check["target"]
-
-        if pattern and not has_pattern(pattern, zshrc_path):
-            console.print(f"[yellow]SKIP[/yellow]    {label} - not referenced in .zshrc")
-            skip += 1
-            continue
 
         predicate = KIND_PREDICATE.get(kind)
         if predicate and predicate(target):
@@ -566,10 +545,6 @@ def verify() -> None:
         summary += f", [red]{fail} fail[/red]"
     else:
         summary += f", {fail} fail"
-    if skip:
-        summary += f", [yellow]{skip} skip[/yellow]"
-    else:
-        summary += f", {skip} skip"
     console.rule(f"[bold]Summary: {summary}[/bold]", align="left")
     if fail > 0:
         raise typer.Exit(1)

@@ -13,7 +13,6 @@
         "additionalProperties": false,
         "properties": {
           "label": { "type": "string" },
-          "pattern": { "type": "string" },
           "kind": { "type": "string", "enum": ["command", "dir", "file"] },
           "target": { "type": "string" }
         }
