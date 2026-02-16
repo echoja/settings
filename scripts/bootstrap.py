@@ -469,7 +469,7 @@ def check_hardcoded_paths(file_path: Path) -> list[tuple[int, str]]:
 def main(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand:
         return
-    run_wizard()
+    print(ctx.get_help())
 
 
 @app.command("list")
@@ -502,19 +502,17 @@ def verify() -> None:
             fail += 1
     console.print()
 
-    # 2. Zshrc dependencies
-    console.rule("[bold]Zshrc dependencies[/bold]", align="left")
+    # 2. Dependencies
+    console.rule("[bold]Dependencies[/bold]", align="left")
     zshrc_path = repo_root() / ".zshrc"
     checks = load_dep_checks()
-    zshrc_checks = [c for c in checks if c.get("pattern")]
-    standalone_checks = [c for c in checks if not c.get("pattern")]
-    for check in sorted(zshrc_checks, key=lambda c: c["label"].casefold()):
+    for check in sorted(checks, key=lambda c: c["label"].casefold()):
         label = check["label"]
-        pattern = check["pattern"]
+        pattern = check.get("pattern")
         kind = check["kind"]
         target = check["target"]
 
-        if not has_pattern(pattern, zshrc_path):
+        if pattern and not has_pattern(pattern, zshrc_path):
             console.print(f"[yellow]SKIP[/yellow]    {label} - not referenced in .zshrc")
             skip += 1
             continue
@@ -528,23 +526,7 @@ def verify() -> None:
             fail += 1
     console.print()
 
-    # 3. Standalone programs
-    console.rule("[bold]Standalone programs[/bold]", align="left")
-    for check in sorted(standalone_checks, key=lambda c: c["label"].casefold()):
-        label = check["label"]
-        kind = check["kind"]
-        target = check["target"]
-
-        predicate = KIND_PREDICATE.get(kind)
-        if predicate and predicate(target):
-            console.print(f"[green]OK[/green]      {label} - {kind}: {target}")
-            ok += 1
-        else:
-            console.print(f"[red]MISSING[/red] {label} - {kind}: {target}")
-            fail += 1
-    console.print()
-
-    # 4. JSON schema validation
+    # 3. JSON schema validation
     console.rule("[bold]JSON schema validation[/bold]", align="left")
     schema_errors = validate_deps_schema()
     if schema_errors:
@@ -556,7 +538,7 @@ def verify() -> None:
         ok += 1
     console.print()
 
-    # 5. Hardcoded home paths
+    # 4. Hardcoded home paths
     console.rule("[bold]Hardcoded home paths[/bold]", align="left")
     violations = check_hardcoded_paths(repo_root() / ".zshrc")
     if violations:
@@ -568,7 +550,7 @@ def verify() -> None:
         ok += 1
     console.print()
 
-    # 6. Pre-commit
+    # 5. Pre-commit
     console.rule("[bold]Pre-commit[/bold]", align="left")
     if shutil.which("pre-commit"):
         console.print("[green]OK[/green]      pre-commit installed")
