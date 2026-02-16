@@ -16,6 +16,9 @@ from pathlib import Path
 from typing import Iterable
 
 import typer
+from rich.console import Console
+
+console = Console()
 
 app = typer.Typer(add_completion=False, help="Bootstrap your environment: link dotfiles, check dependencies, and more.")
 
@@ -345,18 +348,11 @@ def run_wizard() -> None:
     link_items(chosen, mode=mode, dry_run=dry_run)
 
 
-SECTION_WIDTH = 44
-
 KIND_PREDICATE: dict[str, object] = {
     "command": shutil.which,
     "dir": os.path.isdir,
     "file": os.path.isfile,
 }
-
-
-def print_section(title: str) -> None:
-    prefix = f"── {title} "
-    typer.echo(prefix + "─" * max(0, SECTION_WIDTH - len(prefix)))
 
 
 def load_dep_checks() -> list[dict]:
@@ -494,20 +490,20 @@ def verify() -> None:
     ok = fail = skip = 0
 
     # 1. Symlink health
-    print_section("Symlink health")
+    console.rule("[bold]Symlink health[/bold]", align="left")
     for item in available_items():
         st, detail = status_of(item)
         if st == "linked":
-            typer.echo(f"OK      {item.key}")
+            console.print(f"[green]OK[/green]      {item.key}")
             ok += 1
         else:
             label = status_label(st)
-            typer.echo(f"FAIL    {item.key} - {label}: {detail}")
+            console.print(f"[red]FAIL[/red]    {item.key} - {label}: {detail}")
             fail += 1
-    typer.echo()
+    console.print()
 
     # 2. Zshrc dependencies
-    print_section("Zshrc dependencies")
+    console.rule("[bold]Zshrc dependencies[/bold]", align="left")
     zshrc_path = repo_root() / ".zshrc"
     checks = load_dep_checks()
     for check in sorted(checks, key=lambda c: c["label"].casefold()):
@@ -517,55 +513,64 @@ def verify() -> None:
         target = check["target"]
 
         if pattern and not has_pattern(pattern, zshrc_path):
-            typer.echo(f"SKIP    {label} - not referenced in .zshrc")
+            console.print(f"[yellow]SKIP[/yellow]    {label} - not referenced in .zshrc")
             skip += 1
             continue
 
         predicate = KIND_PREDICATE.get(kind)
         if predicate and predicate(target):
-            typer.echo(f"OK      {label} - {kind}: {target}")
+            console.print(f"[green]OK[/green]      {label} - {kind}: {target}")
             ok += 1
         else:
-            typer.echo(f"MISSING {label} - {kind}: {target}")
+            console.print(f"[red]MISSING[/red] {label} - {kind}: {target}")
             fail += 1
-    typer.echo()
+    console.print()
 
     # 3. JSON schema validation
-    print_section("JSON schema validation")
+    console.rule("[bold]JSON schema validation[/bold]", align="left")
     schema_errors = validate_deps_schema()
     if schema_errors:
         for err in schema_errors:
-            typer.echo(f"FAIL    {err}")
+            console.print(f"[red]FAIL[/red]    {err}")
             fail += 1
     else:
-        typer.echo("OK      scripts/zshrc-deps.json")
+        console.print("[green]OK[/green]      scripts/zshrc-deps.json")
         ok += 1
-    typer.echo()
+    console.print()
 
     # 4. Hardcoded home paths
-    print_section("Hardcoded home paths")
+    console.rule("[bold]Hardcoded home paths[/bold]", align="left")
     violations = check_hardcoded_paths(repo_root() / ".zshrc")
     if violations:
         for lineno, line in violations:
-            typer.echo(f"FAIL    .zshrc:{lineno}: {line}")
+            console.print(f"[red]FAIL[/red]    .zshrc:{lineno}: {line}")
             fail += 1
     else:
-        typer.echo("OK      No hardcoded paths found")
+        console.print("[green]OK[/green]      No hardcoded paths found")
         ok += 1
-    typer.echo()
+    console.print()
 
     # 5. Pre-commit
-    print_section("Pre-commit")
+    console.rule("[bold]Pre-commit[/bold]", align="left")
     if shutil.which("pre-commit"):
-        typer.echo("OK      pre-commit installed")
+        console.print("[green]OK[/green]      pre-commit installed")
         ok += 1
     else:
-        typer.echo("MISSING pre-commit not found")
+        console.print("[red]MISSING[/red] pre-commit not found")
         fail += 1
-    typer.echo()
+    console.print()
 
     # Summary
-    typer.echo(f"Summary: {ok} ok, {fail} fail, {skip} skip")
+    summary = f"[green]{ok} ok[/green]"
+    if fail:
+        summary += f", [red]{fail} fail[/red]"
+    else:
+        summary += f", {fail} fail"
+    if skip:
+        summary += f", [yellow]{skip} skip[/yellow]"
+    else:
+        summary += f", {skip} skip"
+    console.rule(f"[bold]Summary: {summary}[/bold]", align="left")
     if fail > 0:
         raise typer.Exit(1)
 
