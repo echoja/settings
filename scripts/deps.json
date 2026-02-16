@@ -305,6 +305,177 @@
       "depends": [
         "homebrew"
       ]
+    },
+    {
+      "label": "docker",
+      "kind": "dir",
+      "target": "/Applications/Docker.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask docker"
+    },
+    {
+      "label": "iterm",
+      "kind": "dir",
+      "target": "/Applications/iTerm.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask iterm2"
+    },
+    {
+      "label": "dbeaver",
+      "kind": "dir",
+      "target": "/Applications/DBeaver.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask dbeaver-community"
+    },
+    {
+      "label": "postman",
+      "kind": "dir",
+      "target": "/Applications/Postman.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask postman"
+    },
+    {
+      "label": "jetbrains-toolbox",
+      "kind": "dir",
+      "target": "/Applications/JetBrains Toolbox.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask jetbrains-toolbox"
+    },
+    {
+      "label": "zed",
+      "kind": "dir",
+      "target": "/Applications/Zed.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask zed"
+    },
+    {
+      "label": "kiro",
+      "kind": "dir",
+      "target": "/Applications/Kiro.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask kiro"
+    },
+    {
+      "label": "obsidian",
+      "kind": "dir",
+      "target": "/Applications/Obsidian.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask obsidian"
+    },
+    {
+      "label": "notion",
+      "kind": "dir",
+      "target": "/Applications/Notion.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask notion"
+    },
+    {
+      "label": "notion-calendar",
+      "kind": "dir",
+      "target": "/Applications/Notion Calendar.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask notion-calendar"
+    },
+    {
+      "label": "shottr",
+      "kind": "dir",
+      "target": "/Applications/Shottr.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask shottr"
+    },
+    {
+      "label": "slack",
+      "kind": "dir",
+      "target": "/Applications/Slack.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask slack"
+    },
+    {
+      "label": "discord",
+      "kind": "dir",
+      "target": "/Applications/Discord.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask discord"
+    },
+    {
+      "label": "telegram",
+      "kind": "dir",
+      "target": "/Applications/Telegram.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask telegram"
+    },
+    {
+      "label": "zoom",
+      "kind": "dir",
+      "target": "/Applications/zoom.us.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask zoom"
+    },
+    {
+      "label": "chatgpt",
+      "kind": "dir",
+      "target": "/Applications/ChatGPT.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask chatgpt"
+    },
+    {
+      "label": "claude",
+      "kind": "dir",
+      "target": "/Applications/Claude.app",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install --cask claude"
+    },
+    {
+      "label": "runcat",
+      "kind": "dir",
+      "target": "/Applications/RunCat.app",
+      "depends": [
+        "mas"
+      ],
+      "install": "mas install 1429033973"
+    },
+    {
+      "label": "bitwarden-app",
+      "kind": "dir",
+      "target": "/Applications/Bitwarden.app",
+      "depends": [
+        "mas"
+      ],
+      "install": "mas install 1352778147"
     }
   ]
 }

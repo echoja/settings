@@ -16,7 +16,7 @@
           "kind": { "type": "string", "enum": ["command", "dir", "file"] },
           "target": { "type": "string" },
           "depends": { "type": "array", "items": { "type": "string" } },
-          "install": { "type": "string", "format": "uri" }
+          "install": { "type": "string" }
         }
       }
     }
