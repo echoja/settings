@@ -4,7 +4,8 @@
     {
       "label": "homebrew",
       "kind": "command",
-      "target": "brew"
+      "target": "brew",
+      "install": "https://brew.sh/"
     },
     {
       "label": "git",
@@ -17,7 +18,8 @@
       "target": "$HOME/.oh-my-zsh/oh-my-zsh.sh",
       "depends": [
         "git"
-      ]
+      ],
+      "install": "https://ohmyz.sh/#install"
     },
     {
       "label": "powerlevel10k",
@@ -25,7 +27,8 @@
       "target": "$HOME/.oh-my-zsh/custom/themes/powerlevel10k",
       "depends": [
         "oh-my-zsh"
-      ]
+      ],
+      "install": "https://github.com/romkatv/powerlevel10k"
     },
     {
       "label": "zsh-syntax-highlighting",
@@ -33,7 +36,8 @@
       "target": "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting",
       "depends": [
         "oh-my-zsh"
-      ]
+      ],
+      "install": "https://github.com/zsh-users/zsh-syntax-highlighting"
     },
     {
       "label": "fzf",
@@ -62,7 +66,8 @@
     {
       "label": "go",
       "kind": "command",
-      "target": "go"
+      "target": "go",
+      "install": "https://go.dev/doc/install"
     },
     {
       "label": "go-bin",
@@ -86,7 +91,8 @@
       "target": "kubectl",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "https://kubernetes.io/docs/tasks/tools/"
     },
     {
       "label": "kubectx",
@@ -102,12 +108,14 @@
       "target": "$HOME/.krew/bin/kubectl-krew",
       "depends": [
         "kubectl"
-      ]
+      ],
+      "install": "https://krew.sigs.k8s.io/docs/user-guide/setup/install/"
     },
     {
       "label": "pnpm",
       "kind": "command",
-      "target": "pnpm"
+      "target": "pnpm",
+      "install": "https://pnpm.io/installation"
     },
     {
       "label": "curlie",
@@ -186,7 +194,8 @@
     {
       "label": "vscode-app-bin",
       "kind": "dir",
-      "target": "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+      "target": "/Applications/Visual Studio Code.app/Contents/Resources/app/bin",
+      "install": "https://code.visualstudio.com/"
     },
     {
       "label": "choose",
@@ -199,12 +208,14 @@
     {
       "label": "raycast",
       "kind": "dir",
-      "target": "/Applications/Raycast.app"
+      "target": "/Applications/Raycast.app",
+      "install": "https://www.raycast.com/"
     },
     {
       "label": "tailscale",
       "kind": "dir",
-      "target": "/Applications/Tailscale.app"
+      "target": "/Applications/Tailscale.app",
+      "install": "https://tailscale.com/download"
     }
   ]
 }

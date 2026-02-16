@@ -571,10 +571,14 @@ def verify() -> None:
             console.print(f"[green]OK[/green]      {label} - {kind}: {target}")
             ok += 1
         else:
-            hint = ""
+            hints: list[str] = []
             if label in required_by:
                 deps = ", ".join(sorted(required_by[label]))
-                hint = f" (required by: {deps})"
+                hints.append(f"required by: {deps}")
+            install_url = check.get("install")
+            if install_url:
+                hints.append(f"install: {install_url}")
+            hint = f" ({', '.join(hints)})" if hints else ""
             console.print(f"[red]MISSING[/red] {label} - {kind}: {target}{hint}")
             fail += 1
     console.print()
