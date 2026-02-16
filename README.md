@@ -2,14 +2,18 @@
 
 개인 macOS zsh 환경 설정을 담고 있는 저장소입니다.
 
-## 구성
-- `.zshrc`: Oh My Zsh 기반 설정과 자주 쓰는 alias, 함수가 포함되어 있습니다.
-- `.codex/config.toml`: Codex CLI 설정 파일입니다.
-- `scripts/bootstrap.py`: 저장소의 설정 파일을 홈 디렉터리에 심볼릭 링크합니다.
+## Prerequisites
+
+- Python 3.14+
+- [uv](https://docs.astral.sh/uv/)
+
+```sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
 ## 사용 방법
 
-```
+```sh
 $ ./scripts/bootstrap.py --help
 ```
 

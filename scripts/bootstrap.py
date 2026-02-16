@@ -1,4 +1,8 @@
 #!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.14"
+# dependencies = ["typer>=0.21.0"]
+# ///
 from __future__ import annotations
 
 from dataclasses import dataclass
