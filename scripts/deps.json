@@ -217,6 +217,86 @@
       "kind": "dir",
       "target": "/Applications/Tailscale.app",
       "install": "https://tailscale.com/download"
+    },
+    {
+      "label": "argocd",
+      "kind": "command",
+      "target": "argocd",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "asdf",
+      "kind": "command",
+      "target": "asdf",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "bitwarden-cli",
+      "kind": "command",
+      "target": "bw",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "gemini-cli",
+      "kind": "command",
+      "target": "gemini",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "gh",
+      "kind": "command",
+      "target": "gh",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "terminal-notifier",
+      "kind": "command",
+      "target": "terminal-notifier",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "pre-commit",
+      "kind": "command",
+      "target": "pre-commit",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "pinentry-mac",
+      "kind": "command",
+      "target": "pinentry-mac",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "saml2aws",
+      "kind": "command",
+      "target": "saml2aws",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "doctl",
+      "kind": "command",
+      "target": "doctl",
+      "depends": [
+        "homebrew"
+      ]
     }
   ]
 }
