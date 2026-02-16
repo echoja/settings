@@ -55,7 +55,7 @@ eval "$(direnv hook zsh)"
 
 
 # 기본 PATH
-export PATH="$PATH:/opt/homebrew/opt/ruby/bin:$HOME/bin:$HOME/.yarn/bin:$HOME/.local/bin:$HOME/Library/Android/sdk/platform-tools:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:/Applications"
+export PATH="$PATH:$HOME/bin:$HOME/.yarn/bin:$HOME/.local/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:/Applications"
 
 # go (https://go.dev/doc/install)
 export PATH="/usr/local/go/bin:$(go env GOPATH)/bin:$PATH"
@@ -82,7 +82,6 @@ export AWS_REGION=ap-northeast-2
 # cinesopa
 alias ssh-cinesopa="ssh -i ~/LightsailDefaultKey-ap-northeast-ezkorry.pem bitnami@13.209.62.19"
 export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 
 alias e="exit"
 
@@ -118,10 +117,6 @@ alias vz="vim ~/.zshrc"
 
 # .zshrc Visual Studio Code로 열기
 alias cz="code ~/settings"
-
-# skim 기본 명령어 변경
-# brew install sk
-export SKIM_DEFAULT_COMMAND="fd --type f || git ls-tree -r --name-only HEAD || rg --files || find ."
 
 # brew tap hashicorp/tap
 # brew install hashicorp/tap/terraform
@@ -199,7 +194,7 @@ function gbrename() {
 
 # git switch
 function gs() {
-  git branch | sk | xargs -I {} git switch {}
+  git branch | fzf | xargs -I {} git switch {}
 }
 
 # go to git root
