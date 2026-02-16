@@ -176,7 +176,21 @@ def verify() -> None:
     fail += gpg_fail
     console.print()
 
-    # 7. Pre-commit hooks
+    # 7. Keychain hygiene
+    console.rule("[bold]Keychain hygiene[/bold]", align="left")
+    r = subprocess.run(
+        ["security", "find-generic-password", "-s", "bw-master", "-a", "bitwarden"],
+        capture_output=True, text=True,
+    )
+    if r.returncode == 0:
+        console.print("[green]OK[/green]      Bitwarden master password in Keychain")
+        ok += 1
+    else:
+        console.print("[red]FAIL[/red]    Bitwarden master password not in Keychain")
+        fail += 1
+    console.print()
+
+    # 8. Pre-commit hooks
     console.rule("[bold]Pre-commit hooks[/bold]", align="left")
     hook_file = repo_root() / ".git" / "hooks" / "pre-commit"
     if hook_file.is_file() and "pre-commit" in hook_file.read_text():
@@ -187,7 +201,7 @@ def verify() -> None:
         fail += 1
     console.print()
 
-    # 8. macOS defaults
+    # 9. macOS defaults
     if platform.system() == "Darwin":
         console.rule("[bold]macOS defaults[/bold]", align="left")
         entries = load_defaults_entries()
