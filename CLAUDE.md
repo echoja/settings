@@ -1,0 +1,1 @@
+작업을 완료할 때마다 `./scripts/bootstrap.py verify` 를 실행하여 변경 사항이 올바른지 확인하세요.
