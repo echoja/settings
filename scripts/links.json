@@ -1,0 +1,25 @@
+{
+  "$schema": "./links.schema.json",
+  "links": [
+    {
+      "key": ".zshrc",
+      "description": "Zsh config"
+    },
+    {
+      "key": ".codex/config.toml",
+      "description": "Codex CLI config"
+    },
+    {
+      "key": ".claude/settings.json",
+      "description": "Claude Code settings"
+    },
+    {
+      "key": ".claude/notify.sh",
+      "description": "Claude Code stop-hook notification script"
+    },
+    {
+      "key": ".claude/CLAUDE.md",
+      "description": "User-scope Claude Code instructions"
+    }
+  ]
+}

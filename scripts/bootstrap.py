@@ -65,46 +65,26 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def available_items() -> list[LinkItem]:
+def load_link_items() -> list[LinkItem]:
+    links_file = repo_root() / "scripts" / "links.json"
+    with open(links_file, encoding="utf-8") as f:
+        data = json.load(f)
     root = repo_root()
     home = Path.home()
     return [
         LinkItem(
-            key=".zshrc",
-            title=".zshrc",
-            description="Zsh config",
-            source=root / ".zshrc",
-            target=home / ".zshrc",
-        ),
-        LinkItem(
-            key=".codex/config.toml",
-            title=".codex/config.toml",
-            description="Codex CLI config",
-            source=root / ".codex" / "config.toml",
-            target=home / ".codex" / "config.toml",
-        ),
-        LinkItem(
-            key=".claude/settings.json",
-            title=".claude/settings.json",
-            description="Claude Code settings",
-            source=root / ".claude" / "settings.json",
-            target=home / ".claude" / "settings.json",
-        ),
-        LinkItem(
-            key=".claude/notify.sh",
-            title=".claude/notify.sh",
-            description="Claude Code stop-hook notification script",
-            source=root / ".claude" / "notify.sh",
-            target=home / ".claude" / "notify.sh",
-        ),
-        LinkItem(
-            key=".claude/CLAUDE.md",
-            title=".claude/CLAUDE.md",
-            description="User-scope Claude Code instructions",
-            source=root / ".claude" / "CLAUDE.md",
-            target=home / ".claude" / "CLAUDE.md",
-        ),
+            key=item["key"],
+            title=item["key"],
+            description=item["description"],
+            source=root / item["key"],
+            target=home / item["key"],
+        )
+        for item in data["links"]
     ]
+
+
+def available_items() -> list[LinkItem]:
+    return load_link_items()
 
 
 def resolve_items(keys: Iterable[str], use_all: bool) -> list[LinkItem]:
@@ -624,11 +604,20 @@ def verify() -> None:
     else:
         console.print("[green]OK[/green]      scripts/macos-defaults.json")
         ok += 1
+
+    links_schema_errors = validate_links_schema()
+    if links_schema_errors:
+        for err in links_schema_errors:
+            console.print(f"[red]FAIL[/red]    {err}")
+            fail += 1
+    else:
+        console.print("[green]OK[/green]      scripts/links.json")
+        ok += 1
     console.print()
 
     # 4. JSON formatting
     console.rule("[bold]JSON formatting[/bold]", align="left")
-    for json_name in ("deps.json", "macos-defaults.json"):
+    for json_name in ("deps.json", "macos-defaults.json", "links.json"):
         json_file = repo_root() / "scripts" / json_name
         if check_json_formatting(json_file):
             console.print(f"[green]OK[/green]      scripts/{json_name}")
@@ -924,6 +913,69 @@ def validate_defaults_schema() -> list[str]:
                     errors.append(
                         f"defaults[{i}].category: must be one of {category_enum}, got '{item['category']}'"
                     )
+
+    return errors
+
+
+def validate_links_schema() -> list[str]:
+    links_file = repo_root() / "scripts" / "links.json"
+    schema_file = repo_root() / "scripts" / "links.schema.json"
+    errors: list[str] = []
+
+    try:
+        with open(links_file, encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        return [f"cannot load links.json: {exc}"]
+
+    try:
+        with open(schema_file, encoding="utf-8") as f:
+            schema = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        return [f"cannot load schema: {exc}"]
+
+    if not isinstance(data, dict):
+        return ["root must be an object"]
+
+    for key in schema.get("required", []):
+        if key not in data:
+            errors.append(f"missing required key: {key}")
+
+    allowed_keys = set(schema.get("properties", {}).keys())
+    if schema.get("additionalProperties") is False:
+        for key in data:
+            if key not in allowed_keys:
+                errors.append(f"unexpected key: {key}")
+
+    links = data.get("links")
+    if links is not None:
+        if not isinstance(links, list):
+            errors.append("'links' must be an array")
+        else:
+            item_schema = (
+                schema.get("properties", {}).get("links", {}).get("items", {})
+            )
+            required_fields = item_schema.get("required", [])
+            allowed_fields = set(item_schema.get("properties", {}).keys())
+            no_additional = item_schema.get("additionalProperties") is False
+
+            for i, item in enumerate(links):
+                if not isinstance(item, dict):
+                    errors.append(f"links[{i}]: must be an object")
+                    continue
+                for field in required_fields:
+                    if field not in item:
+                        errors.append(f"links[{i}]: missing required field: {field}")
+                if no_additional:
+                    for key in item:
+                        if key not in allowed_fields:
+                            errors.append(f"links[{i}]: unexpected field: {key}")
+                for field, prop_schema in item_schema.get("properties", {}).items():
+                    if field not in item:
+                        continue
+                    val = item[field]
+                    if prop_schema.get("type") == "string" and not isinstance(val, str):
+                        errors.append(f"links[{i}].{field}: must be a string")
 
     return errors
 
