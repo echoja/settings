@@ -5,6 +5,10 @@
 # ///
 from __future__ import annotations
 
+import json
+import os
+import re
+import shutil
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -341,6 +345,130 @@ def run_wizard() -> None:
     link_items(chosen, mode=mode, dry_run=dry_run)
 
 
+SECTION_WIDTH = 44
+
+KIND_PREDICATE: dict[str, object] = {
+    "command": shutil.which,
+    "dir": os.path.isdir,
+    "file": os.path.isfile,
+}
+
+
+def print_section(title: str) -> None:
+    prefix = f"── {title} "
+    typer.echo(prefix + "─" * max(0, SECTION_WIDTH - len(prefix)))
+
+
+def load_dep_checks() -> list[dict]:
+    checks_file = repo_root() / "scripts" / "zshrc-deps.json"
+    with open(checks_file, encoding="utf-8") as f:
+        data = json.load(f)
+    home = str(Path.home())
+    for check in data["checks"]:
+        check["target"] = check["target"].replace("$HOME", home)
+    return data["checks"]
+
+
+def has_pattern(pattern: str, zshrc_path: Path) -> bool:
+    try:
+        regex = re.compile(pattern)
+    except re.error:
+        return False
+    with open(zshrc_path, encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            if line.lstrip().startswith("#"):
+                continue
+            if regex.search(line):
+                return True
+    return False
+
+
+def validate_deps_schema() -> list[str]:
+    checks_file = repo_root() / "scripts" / "zshrc-deps.json"
+    schema_file = repo_root() / "scripts" / "zshrc-deps.schema.json"
+    errors: list[str] = []
+
+    try:
+        with open(checks_file, encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        return [f"cannot load zshrc-deps.json: {exc}"]
+
+    try:
+        with open(schema_file, encoding="utf-8") as f:
+            schema = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        return [f"cannot load schema: {exc}"]
+
+    if not isinstance(data, dict):
+        return ["root must be an object"]
+
+    for key in schema.get("required", []):
+        if key not in data:
+            errors.append(f"missing required key: {key}")
+
+    allowed_keys = set(schema.get("properties", {}).keys())
+    if schema.get("additionalProperties") is False:
+        for key in data:
+            if key not in allowed_keys:
+                errors.append(f"unexpected key: {key}")
+
+    checks = data.get("checks")
+    if checks is not None:
+        if not isinstance(checks, list):
+            errors.append("'checks' must be an array")
+        else:
+            item_schema = (
+                schema.get("properties", {}).get("checks", {}).get("items", {})
+            )
+            required_fields = item_schema.get("required", [])
+            allowed_fields = set(item_schema.get("properties", {}).keys())
+            no_additional = item_schema.get("additionalProperties") is False
+            kind_enum = (
+                item_schema.get("properties", {}).get("kind", {}).get("enum")
+            )
+
+            for i, item in enumerate(checks):
+                if not isinstance(item, dict):
+                    errors.append(f"checks[{i}]: must be an object")
+                    continue
+                for field in required_fields:
+                    if field not in item:
+                        errors.append(f"checks[{i}]: missing required field: {field}")
+                if no_additional:
+                    for key in item:
+                        if key not in allowed_fields:
+                            errors.append(f"checks[{i}]: unexpected field: {key}")
+                for field, prop_schema in item_schema.get("properties", {}).items():
+                    if field not in item:
+                        continue
+                    val = item[field]
+                    if prop_schema.get("type") == "string" and not isinstance(
+                        val, str
+                    ):
+                        errors.append(f"checks[{i}].{field}: must be a string")
+                    if (
+                        field == "kind"
+                        and kind_enum
+                        and val not in kind_enum
+                    ):
+                        errors.append(
+                            f"checks[{i}].kind: must be one of {kind_enum}, got '{val}'"
+                        )
+
+    return errors
+
+
+def check_hardcoded_paths(file_path: Path) -> list[tuple[int, str]]:
+    regex = re.compile(r"/(Users|home)/[^\s/]+")
+    violations: list[tuple[int, str]] = []
+    with open(file_path, encoding="utf-8", errors="ignore") as f:
+        for lineno, line in enumerate(f, start=1):
+            if regex.search(line):
+                violations.append((lineno, line.rstrip()))
+    return violations
+
+
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand:
@@ -358,6 +486,88 @@ def list_items() -> None:
 def status() -> None:
     """Alias for list."""
     print_status(available_items())
+
+
+@app.command()
+def verify() -> None:
+    """Run all verification checks on your environment."""
+    ok = fail = skip = 0
+
+    # 1. Symlink health
+    print_section("Symlink health")
+    for item in available_items():
+        st, detail = status_of(item)
+        if st == "linked":
+            typer.echo(f"OK      {item.key}")
+            ok += 1
+        else:
+            label = status_label(st)
+            typer.echo(f"FAIL    {item.key} - {label}: {detail}")
+            fail += 1
+    typer.echo()
+
+    # 2. Zshrc dependencies
+    print_section("Zshrc dependencies")
+    zshrc_path = repo_root() / ".zshrc"
+    checks = load_dep_checks()
+    for check in sorted(checks, key=lambda c: c["label"].casefold()):
+        label = check["label"]
+        pattern = check["pattern"]
+        kind = check["kind"]
+        target = check["target"]
+
+        if pattern and not has_pattern(pattern, zshrc_path):
+            typer.echo(f"SKIP    {label} - not referenced in .zshrc")
+            skip += 1
+            continue
+
+        predicate = KIND_PREDICATE.get(kind)
+        if predicate and predicate(target):
+            typer.echo(f"OK      {label} - {kind}: {target}")
+            ok += 1
+        else:
+            typer.echo(f"MISSING {label} - {kind}: {target}")
+            fail += 1
+    typer.echo()
+
+    # 3. JSON schema validation
+    print_section("JSON schema validation")
+    schema_errors = validate_deps_schema()
+    if schema_errors:
+        for err in schema_errors:
+            typer.echo(f"FAIL    {err}")
+            fail += 1
+    else:
+        typer.echo("OK      scripts/zshrc-deps.json")
+        ok += 1
+    typer.echo()
+
+    # 4. Hardcoded home paths
+    print_section("Hardcoded home paths")
+    violations = check_hardcoded_paths(repo_root() / ".zshrc")
+    if violations:
+        for lineno, line in violations:
+            typer.echo(f"FAIL    .zshrc:{lineno}: {line}")
+            fail += 1
+    else:
+        typer.echo("OK      No hardcoded paths found")
+        ok += 1
+    typer.echo()
+
+    # 5. Pre-commit
+    print_section("Pre-commit")
+    if shutil.which("pre-commit"):
+        typer.echo("OK      pre-commit installed")
+        ok += 1
+    else:
+        typer.echo("MISSING pre-commit not found")
+        fail += 1
+    typer.echo()
+
+    # Summary
+    typer.echo(f"Summary: {ok} ok, {fail} fail, {skip} skip")
+    if fail > 0:
+        raise typer.Exit(1)
 
 
 @app.command()
