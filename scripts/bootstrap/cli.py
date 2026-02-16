@@ -18,7 +18,7 @@ from .defaults import (
     values_equal,
 )
 from .deps import KIND_PREDICATE, load_dep_checks
-from .git import verify_gpg_signing
+from .git import verify_gpg_signing, verify_ssh_keys
 from .symlinks import (
     ReplaceMode,
     confirm_mode,
@@ -176,7 +176,14 @@ def verify() -> None:
     fail += gpg_fail
     console.print()
 
-    # 7. Keychain hygiene
+    # 7. SSH keys
+    console.rule("[bold]SSH keys[/bold]", align="left")
+    ssh_ok, ssh_fail = verify_ssh_keys()
+    ok += ssh_ok
+    fail += ssh_fail
+    console.print()
+
+    # 8. Keychain hygiene
     console.rule("[bold]Keychain hygiene[/bold]", align="left")
     r = subprocess.run(
         ["security", "find-generic-password", "-s", "bw-master", "-a", "bitwarden"],
@@ -190,7 +197,7 @@ def verify() -> None:
         fail += 1
     console.print()
 
-    # 8. Pre-commit hooks
+    # 9. Pre-commit hooks
     console.rule("[bold]Pre-commit hooks[/bold]", align="left")
     hook_file = repo_root() / ".git" / "hooks" / "pre-commit"
     if hook_file.is_file() and "pre-commit" in hook_file.read_text():
@@ -201,7 +208,7 @@ def verify() -> None:
         fail += 1
     console.print()
 
-    # 9. macOS defaults
+    # 10. macOS defaults
     if platform.system() == "Darwin":
         console.rule("[bold]macOS defaults[/bold]", align="left")
         entries = load_defaults_entries()

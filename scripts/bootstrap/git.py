@@ -56,3 +56,29 @@ def verify_gpg_signing() -> tuple[int, int]:
         fail += 1
 
     return ok, fail
+
+
+def verify_ssh_keys() -> tuple[int, int]:
+    ok = fail = 0
+
+    ssh_dir = Path.home() / ".ssh"
+    key_types = ("ed25519", "rsa", "ecdsa")
+    found: list[str] = []
+    for kt in key_types:
+        priv = ssh_dir / f"id_{kt}"
+        pub = ssh_dir / f"id_{kt}.pub"
+        if priv.is_file() and pub.is_file():
+            found.append(kt)
+
+    if found:
+        for kt in found:
+            console.print(f"[green]OK[/green]      SSH key pair: id_{kt}")
+            ok += 1
+    else:
+        console.print(
+            "[red]FAIL[/red]    No SSH key pair found"
+            " (run: ssh-keygen -t ed25519)"
+        )
+        fail += 1
+
+    return ok, fail
