@@ -206,10 +206,6 @@ function cdgr() {
   cd $(git rev-parse --show-toplevel)
 }
 
-# KOLON 인증서 관련
-alias addcert="yarn config set cafile $HOME/KOLON.crt --global; npm config set cafile $HOME/KOLON.crt --global"
-alias delcert="yarn config delete cafile --global ; npm config --location=global delete cafile ; npm config delete cafile ; yarn config delete cafile"
-
 
 # 포트 종료
 function killport {
