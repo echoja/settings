@@ -12,12 +12,12 @@ import platform
 import re
 import shutil
 import subprocess
+from collections import defaultdict, deque
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from collections import defaultdict, deque
-from typing import Iterable
 
 import typer
 from rich.console import Console
@@ -83,12 +83,8 @@ def load_link_items() -> list[LinkItem]:
     ]
 
 
-def available_items() -> list[LinkItem]:
-    return load_link_items()
-
-
 def resolve_items(keys: Iterable[str], use_all: bool) -> list[LinkItem]:
-    items = available_items()
+    items = load_link_items()
     if use_all:
         return items
 
@@ -279,78 +275,6 @@ def confirm_mode(mode: ReplaceMode, dry_run: bool, yes: bool) -> bool:
     )
 
 
-def select_items_interactively(items: list[LinkItem]) -> list[LinkItem]:
-    typer.echo("Link wizard")
-    typer.echo("Available targets:")
-    for idx, item in enumerate(items, start=1):
-        status, detail = status_of(item)
-        label = status_label(status)
-        detail_text = f" ({detail})" if detail else ""
-        typer.echo(
-            f"{idx:>2}) {label:<7} {item.key:<22} {link_target_summary(item)}{detail_text}"
-        )
-
-    prompt = "Select items [1,2/all/none]"
-    while True:
-        selection = typer.prompt(prompt, default="all")
-        cleaned = selection.strip().lower()
-        if cleaned in {"all", "a"}:
-            return items
-        if cleaned in {"none", "n"}:
-            return []
-
-        tokens = [token for token in cleaned.replace(",", " ").split() if token]
-        chosen: list[LinkItem] = []
-        for token in tokens:
-            if not token.isdigit():
-                continue
-            idx = int(token)
-            if 1 <= idx <= len(items):
-                item = items[idx - 1]
-                if item not in chosen:
-                    chosen.append(item)
-        if chosen:
-            return chosen
-        typer.echo("Invalid selection. Try again.")
-
-
-def select_mode_interactively(default: ReplaceMode) -> ReplaceMode:
-    choices = {mode.value for mode in ReplaceMode}
-    prompt = "Mode [safe/backup/force]"
-    while True:
-        selection = typer.prompt(prompt, default=default.value).strip().lower()
-        if selection in choices:
-            return ReplaceMode(selection)
-        typer.echo("Invalid mode. Try again.")
-
-
-def run_wizard() -> None:
-    items = available_items()
-    chosen = select_items_interactively(items)
-    if not chosen:
-        typer.echo("Nothing selected.")
-        return
-
-    needs_replace = any(
-        status_of(item)[0]
-        in {"exists", "linked-elsewhere", "broken-link", "target-dir"}
-        for item in chosen
-    )
-    default_mode = ReplaceMode.backup if needs_replace else ReplaceMode.safe
-    mode = select_mode_interactively(default_mode)
-    dry_run = typer.confirm("Dry run only?", default=False)
-
-    typer.echo("Plan:")
-    for item in chosen:
-        typer.echo(f"- {item.key}: {link_target_summary(item)}")
-
-    if not typer.confirm("Proceed?", default=True):
-        typer.echo("Aborted.")
-        return
-
-    link_items(chosen, mode=mode, dry_run=dry_run)
-
-
 KIND_PREDICATE: dict[str, object] = {
     "command": shutil.which,
     "dir": os.path.isdir,
@@ -368,19 +292,25 @@ def load_dep_checks() -> list[dict]:
     return data["checks"]
 
 
-def validate_deps_schema() -> list[str]:
-    checks_file = repo_root() / "scripts" / "deps.json"
-    schema_file = repo_root() / "scripts" / "deps.schema.json"
+def validate_json_schema(
+    json_path: Path,
+    schema_path: Path,
+    array_key: str,
+    *,
+    skip_type_check_fields: frozenset[str] = frozenset(),
+    extra_item_validator: Callable[[int, dict, dict, list[str]], None] | None = None,
+    extra_validator: Callable[[list, list[str]], None] | None = None,
+) -> list[str]:
     errors: list[str] = []
 
     try:
-        with open(checks_file, encoding="utf-8") as f:
+        with open(json_path, encoding="utf-8") as f:
             data = json.load(f)
     except (json.JSONDecodeError, OSError) as exc:
-        return [f"cannot load deps.json: {exc}"]
+        return [f"cannot load {json_path.name}: {exc}"]
 
     try:
-        with open(schema_file, encoding="utf-8") as f:
+        with open(schema_path, encoding="utf-8") as f:
             schema = json.load(f)
     except (json.JSONDecodeError, OSError) as exc:
         return [f"cannot load schema: {exc}"]
@@ -398,104 +328,131 @@ def validate_deps_schema() -> list[str]:
             if key not in allowed_keys:
                 errors.append(f"unexpected key: {key}")
 
-    checks = data.get("checks")
-    if checks is not None:
-        if not isinstance(checks, list):
-            errors.append("'checks' must be an array")
+    items = data.get(array_key)
+    if items is not None:
+        if not isinstance(items, list):
+            errors.append(f"'{array_key}' must be an array")
         else:
             item_schema = (
-                schema.get("properties", {}).get("checks", {}).get("items", {})
+                schema.get("properties", {}).get(array_key, {}).get("items", {})
             )
             required_fields = item_schema.get("required", [])
             allowed_fields = set(item_schema.get("properties", {}).keys())
             no_additional = item_schema.get("additionalProperties") is False
-            kind_enum = (
-                item_schema.get("properties", {}).get("kind", {}).get("enum")
-            )
 
-            for i, item in enumerate(checks):
+            for i, item in enumerate(items):
                 if not isinstance(item, dict):
-                    errors.append(f"checks[{i}]: must be an object")
+                    errors.append(f"{array_key}[{i}]: must be an object")
                     continue
                 for field in required_fields:
                     if field not in item:
-                        errors.append(f"checks[{i}]: missing required field: {field}")
+                        errors.append(f"{array_key}[{i}]: missing required field: {field}")
                 if no_additional:
                     for key in item:
                         if key not in allowed_fields:
-                            errors.append(f"checks[{i}]: unexpected field: {key}")
+                            errors.append(f"{array_key}[{i}]: unexpected field: {key}")
                 for field, prop_schema in item_schema.get("properties", {}).items():
                     if field not in item:
                         continue
                     val = item[field]
-                    if prop_schema.get("type") == "string" and not isinstance(
-                        val, str
-                    ):
-                        errors.append(f"checks[{i}].{field}: must be a string")
-                    if (
-                        field == "kind"
-                        and kind_enum
-                        and val not in kind_enum
-                    ):
+                    if field not in skip_type_check_fields:
+                        if prop_schema.get("type") == "string" and not isinstance(
+                            val, str
+                        ):
+                            errors.append(f"{array_key}[{i}].{field}: must be a string")
+                    enum_vals = prop_schema.get("enum")
+                    if enum_vals and val not in enum_vals:
                         errors.append(
-                            f"checks[{i}].kind: must be one of {kind_enum}, got '{val}'"
+                            f"{array_key}[{i}].{field}: must be one of {enum_vals}, got '{val}'"
                         )
-                    if field == "depends" and isinstance(val, list):
-                        for dep_val in val:
-                            if not isinstance(dep_val, str):
-                                errors.append(
-                                    f"checks[{i}].depends: items must be strings"
-                                )
+                if extra_item_validator:
+                    extra_item_validator(i, item, item_schema, errors)
 
-            # Label reference check: every depends entry must match an existing label
-            all_labels = {
-                item["label"]
-                for item in checks
-                if isinstance(item, dict) and "label" in item
-            }
-            for i, item in enumerate(checks):
-                if not isinstance(item, dict):
-                    continue
-                for dep in item.get("depends", []):
-                    if dep not in all_labels:
-                        errors.append(
-                            f"checks[{i}].depends: unknown label '{dep}'"
-                        )
-
-            # Cycle detection via topological sort (Kahn's algorithm)
-            in_degree: dict[str, int] = defaultdict(int)
-            dependents: dict[str, list[str]] = defaultdict(list)
-            for item in checks:
-                if not isinstance(item, dict) or "label" not in item:
-                    continue
-                label = item["label"]
-                in_degree.setdefault(label, 0)
-                for dep in item.get("depends", []):
-                    if dep in all_labels:
-                        dependents[dep].append(label)
-                        in_degree[label] += 1
-
-            queue: deque[str] = deque(
-                label for label, deg in in_degree.items() if deg == 0
-            )
-            visited = 0
-            while queue:
-                node = queue.popleft()
-                visited += 1
-                for child in dependents[node]:
-                    in_degree[child] -= 1
-                    if in_degree[child] == 0:
-                        queue.append(child)
-
-            if visited < len(in_degree):
-                cycle_members = sorted(
-                    label for label, deg in in_degree.items() if deg > 0
-                )
-                errors.append(
-                    f"dependency cycle detected among: {', '.join(cycle_members)}"
-                )
+            if extra_validator:
+                extra_validator(items, errors)
 
     return errors
+
+
+def validate_deps_schema() -> list[str]:
+    def _item_validator(i: int, item: dict, item_schema: dict, errors: list[str]) -> None:
+        depends = item.get("depends")
+        if isinstance(depends, list):
+            for dep_val in depends:
+                if not isinstance(dep_val, str):
+                    errors.append(f"checks[{i}].depends: items must be strings")
+
+    def _extra_validator(items: list, errors: list[str]) -> None:
+        all_labels = {
+            item["label"]
+            for item in items
+            if isinstance(item, dict) and "label" in item
+        }
+        for i, item in enumerate(items):
+            if not isinstance(item, dict):
+                continue
+            for dep in item.get("depends", []):
+                if dep not in all_labels:
+                    errors.append(
+                        f"checks[{i}].depends: unknown label '{dep}'"
+                    )
+
+        in_degree: dict[str, int] = defaultdict(int)
+        dependents: dict[str, list[str]] = defaultdict(list)
+        for item in items:
+            if not isinstance(item, dict) or "label" not in item:
+                continue
+            label = item["label"]
+            in_degree.setdefault(label, 0)
+            for dep in item.get("depends", []):
+                if dep in all_labels:
+                    dependents[dep].append(label)
+                    in_degree[label] += 1
+
+        queue: deque[str] = deque(
+            label for label, deg in in_degree.items() if deg == 0
+        )
+        visited = 0
+        while queue:
+            node = queue.popleft()
+            visited += 1
+            for child in dependents[node]:
+                in_degree[child] -= 1
+                if in_degree[child] == 0:
+                    queue.append(child)
+
+        if visited < len(in_degree):
+            cycle_members = sorted(
+                label for label, deg in in_degree.items() if deg > 0
+            )
+            errors.append(
+                f"dependency cycle detected among: {', '.join(cycle_members)}"
+            )
+
+    return validate_json_schema(
+        repo_root() / "scripts" / "deps.json",
+        repo_root() / "scripts" / "deps.schema.json",
+        "checks",
+        extra_item_validator=_item_validator,
+        extra_validator=_extra_validator,
+    )
+
+
+def validate_defaults_schema() -> list[str]:
+    return validate_json_schema(
+        repo_root() / "scripts" / "macos-defaults.json",
+        repo_root() / "scripts" / "macos-defaults.schema.json",
+        "defaults",
+        skip_type_check_fields=frozenset({"value"}),
+    )
+
+
+def validate_links_schema() -> list[str]:
+    return validate_json_schema(
+        repo_root() / "scripts" / "links.json",
+        repo_root() / "scripts" / "links.schema.json",
+        "links",
+    )
 
 
 def check_json_formatting(file_path: Path) -> bool:
@@ -516,6 +473,63 @@ def check_hardcoded_paths(file_path: Path) -> list[tuple[int, str]]:
     return violations
 
 
+def git_config_get(key: str) -> str | None:
+    r = subprocess.run(
+        ["git", "config", "--global", key],
+        capture_output=True, text=True,
+    )
+    return r.stdout.strip() or None if r.returncode == 0 else None
+
+
+def verify_gpg_signing() -> tuple[int, int]:
+    ok = fail = 0
+
+    gpg_sign = git_config_get("commit.gpgsign")
+    if gpg_sign == "true":
+        console.print("[green]OK[/green]      commit.gpgsign = true")
+        ok += 1
+    else:
+        console.print(f"[red]FAIL[/red]    commit.gpgsign = {gpg_sign or '(unset)'}")
+        fail += 1
+
+    signing_key = git_config_get("user.signingkey")
+    if signing_key:
+        r = subprocess.run(
+            ["gpg", "--list-secret-keys", "--keyid-format", "long", signing_key],
+            capture_output=True, text=True,
+        )
+        if r.returncode == 0 and signing_key in r.stdout:
+            console.print(f"[green]OK[/green]      signing key {signing_key[:16]}...")
+            ok += 1
+        else:
+            console.print(f"[red]FAIL[/red]    signing key {signing_key} not found in GPG keyring")
+            fail += 1
+    else:
+        console.print("[red]FAIL[/red]    user.signingkey not set")
+        fail += 1
+
+    agent_conf = Path.home() / ".gnupg" / "gpg-agent.conf"
+    if agent_conf.is_file() and "pinentry-mac" in agent_conf.read_text():
+        pinentry = shutil.which("pinentry-mac")
+        if pinentry:
+            console.print(f"[green]OK[/green]      pinentry-mac ({pinentry})")
+            ok += 1
+        else:
+            console.print("[red]FAIL[/red]    pinentry-mac configured but binary not found")
+            fail += 1
+    else:
+        console.print("[red]FAIL[/red]    pinentry-mac not configured in gpg-agent.conf")
+        fail += 1
+
+    return ok, fail
+
+
+def require_darwin() -> None:
+    if platform.system() != "Darwin":
+        console.print("[red]ERROR[/red]  This command only works on macOS")
+        raise typer.Exit(1)
+
+
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand:
@@ -526,13 +540,13 @@ def main(ctx: typer.Context) -> None:
 @app.command("list")
 def list_items() -> None:
     """List available link targets and current status."""
-    print_status(available_items())
+    print_status(load_link_items())
 
 
 @app.command()
 def status() -> None:
     """Alias for list."""
-    print_status(available_items())
+    print_status(load_link_items())
 
 
 @app.command()
@@ -542,7 +556,7 @@ def verify() -> None:
 
     # 1. Symlink health
     console.rule("[bold]Symlink health[/bold]", align="left")
-    for item in available_items():
+    for item in load_link_items():
         st, detail = status_of(item)
         if st == "linked":
             console.print(f"[green]OK[/green]      {item.key}")
@@ -644,50 +658,9 @@ def verify() -> None:
 
     # 6. GPG signing
     console.rule("[bold]GPG signing[/bold]", align="left")
-
-    def git_cfg(key: str) -> str | None:
-        r = subprocess.run(
-            ["git", "config", "--global", key],
-            capture_output=True, text=True,
-        )
-        return r.stdout.strip() or None if r.returncode == 0 else None
-
-    gpg_sign = git_cfg("commit.gpgsign")
-    if gpg_sign == "true":
-        console.print("[green]OK[/green]      commit.gpgsign = true")
-        ok += 1
-    else:
-        console.print(f"[red]FAIL[/red]    commit.gpgsign = {gpg_sign or '(unset)'}")
-        fail += 1
-
-    signing_key = git_cfg("user.signingkey")
-    if signing_key:
-        r = subprocess.run(
-            ["gpg", "--list-secret-keys", "--keyid-format", "long", signing_key],
-            capture_output=True, text=True,
-        )
-        if r.returncode == 0 and signing_key in r.stdout:
-            console.print(f"[green]OK[/green]      signing key {signing_key[:16]}...")
-            ok += 1
-        else:
-            console.print(f"[red]FAIL[/red]    signing key {signing_key} not found in GPG keyring")
-            fail += 1
-    else:
-        console.print("[red]FAIL[/red]    user.signingkey not set")
-        fail += 1
-
-    agent_conf = Path.home() / ".gnupg" / "gpg-agent.conf"
-    if agent_conf.is_file() and "pinentry-mac" in agent_conf.read_text():
-        pinentry = shutil.which("pinentry-mac")
-        if pinentry:
-            console.print(f"[green]OK[/green]      pinentry-mac ({pinentry})")
-            ok += 1
-        else:
-            console.print("[red]FAIL[/red]    pinentry-mac configured but binary not found")
-            fail += 1
-    else:
-        console.print("[red]FAIL[/red]    pinentry-mac not configured in gpg-agent.conf")
-        fail += 1
+    gpg_ok, gpg_fail = verify_gpg_signing()
+    ok += gpg_ok
+    fail += gpg_fail
     console.print()
 
     # 7. Pre-commit hooks
@@ -839,157 +812,13 @@ def values_equal(a: object, b: object, type_: str) -> bool:
     return a == b
 
 
-def validate_defaults_schema() -> list[str]:
-    defaults_file = repo_root() / "scripts" / "macos-defaults.json"
-    schema_file = repo_root() / "scripts" / "macos-defaults.schema.json"
-    errors: list[str] = []
-
-    try:
-        with open(defaults_file, encoding="utf-8") as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, OSError) as exc:
-        return [f"cannot load macos-defaults.json: {exc}"]
-
-    try:
-        with open(schema_file, encoding="utf-8") as f:
-            schema = json.load(f)
-    except (json.JSONDecodeError, OSError) as exc:
-        return [f"cannot load schema: {exc}"]
-
-    if not isinstance(data, dict):
-        return ["root must be an object"]
-
-    for key in schema.get("required", []):
-        if key not in data:
-            errors.append(f"missing required key: {key}")
-
-    allowed_keys = set(schema.get("properties", {}).keys())
-    if schema.get("additionalProperties") is False:
-        for key in data:
-            if key not in allowed_keys:
-                errors.append(f"unexpected key: {key}")
-
-    defaults = data.get("defaults")
-    if defaults is not None:
-        if not isinstance(defaults, list):
-            errors.append("'defaults' must be an array")
-        else:
-            item_schema = (
-                schema.get("properties", {}).get("defaults", {}).get("items", {})
-            )
-            required_fields = item_schema.get("required", [])
-            allowed_fields = set(item_schema.get("properties", {}).keys())
-            no_additional = item_schema.get("additionalProperties") is False
-            type_enum = (
-                item_schema.get("properties", {}).get("type", {}).get("enum")
-            )
-            category_enum = (
-                item_schema.get("properties", {}).get("category", {}).get("enum")
-            )
-
-            for i, item in enumerate(defaults):
-                if not isinstance(item, dict):
-                    errors.append(f"defaults[{i}]: must be an object")
-                    continue
-                for field in required_fields:
-                    if field not in item:
-                        errors.append(f"defaults[{i}]: missing required field: {field}")
-                if no_additional:
-                    for key in item:
-                        if key not in allowed_fields:
-                            errors.append(f"defaults[{i}]: unexpected field: {key}")
-                for field, prop_schema in item_schema.get("properties", {}).items():
-                    if field not in item:
-                        continue
-                    val = item[field]
-                    if field == "value":
-                        continue
-                    if prop_schema.get("type") == "string" and not isinstance(val, str):
-                        errors.append(f"defaults[{i}].{field}: must be a string")
-                if "type" in item and type_enum and item["type"] not in type_enum:
-                    errors.append(
-                        f"defaults[{i}].type: must be one of {type_enum}, got '{item['type']}'"
-                    )
-                if "category" in item and category_enum and item["category"] not in category_enum:
-                    errors.append(
-                        f"defaults[{i}].category: must be one of {category_enum}, got '{item['category']}'"
-                    )
-
-    return errors
-
-
-def validate_links_schema() -> list[str]:
-    links_file = repo_root() / "scripts" / "links.json"
-    schema_file = repo_root() / "scripts" / "links.schema.json"
-    errors: list[str] = []
-
-    try:
-        with open(links_file, encoding="utf-8") as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, OSError) as exc:
-        return [f"cannot load links.json: {exc}"]
-
-    try:
-        with open(schema_file, encoding="utf-8") as f:
-            schema = json.load(f)
-    except (json.JSONDecodeError, OSError) as exc:
-        return [f"cannot load schema: {exc}"]
-
-    if not isinstance(data, dict):
-        return ["root must be an object"]
-
-    for key in schema.get("required", []):
-        if key not in data:
-            errors.append(f"missing required key: {key}")
-
-    allowed_keys = set(schema.get("properties", {}).keys())
-    if schema.get("additionalProperties") is False:
-        for key in data:
-            if key not in allowed_keys:
-                errors.append(f"unexpected key: {key}")
-
-    links = data.get("links")
-    if links is not None:
-        if not isinstance(links, list):
-            errors.append("'links' must be an array")
-        else:
-            item_schema = (
-                schema.get("properties", {}).get("links", {}).get("items", {})
-            )
-            required_fields = item_schema.get("required", [])
-            allowed_fields = set(item_schema.get("properties", {}).keys())
-            no_additional = item_schema.get("additionalProperties") is False
-
-            for i, item in enumerate(links):
-                if not isinstance(item, dict):
-                    errors.append(f"links[{i}]: must be an object")
-                    continue
-                for field in required_fields:
-                    if field not in item:
-                        errors.append(f"links[{i}]: missing required field: {field}")
-                if no_additional:
-                    for key in item:
-                        if key not in allowed_fields:
-                            errors.append(f"links[{i}]: unexpected field: {key}")
-                for field, prop_schema in item_schema.get("properties", {}).items():
-                    if field not in item:
-                        continue
-                    val = item[field]
-                    if prop_schema.get("type") == "string" and not isinstance(val, str):
-                        errors.append(f"links[{i}].{field}: must be a string")
-
-    return errors
-
-
 # ── defaults commands ───────────────────────────────────────────────────
 
 
 @defaults_app.command("export")
 def defaults_export() -> None:
     """Read current system values and update macos-defaults.json."""
-    if platform.system() != "Darwin":
-        console.print("[red]ERROR[/red]  This command only works on macOS")
-        raise typer.Exit(1)
+    require_darwin()
 
     defaults_file = repo_root() / "scripts" / "macos-defaults.json"
     with open(defaults_file, encoding="utf-8") as f:
@@ -1024,9 +853,7 @@ def defaults_apply(
     yes: bool = typer.Option(False, "-y", "--yes", help="Skip confirmations."),
 ) -> None:
     """Apply saved defaults values to the system."""
-    if platform.system() != "Darwin":
-        console.print("[red]ERROR[/red]  This command only works on macOS")
-        raise typer.Exit(1)
+    require_darwin()
 
     entries = load_defaults_entries()
     changes: list[DefaultEntry] = []
@@ -1074,9 +901,7 @@ def defaults_apply(
 @defaults_app.command("diff")
 def defaults_diff() -> None:
     """Show differences between saved and current system values."""
-    if platform.system() != "Darwin":
-        console.print("[red]ERROR[/red]  This command only works on macOS")
-        raise typer.Exit(1)
+    require_darwin()
 
     entries = load_defaults_entries()
     by_category: dict[str, list[DefaultEntry]] = defaultdict(list)
