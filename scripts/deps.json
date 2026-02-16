@@ -1,33 +1,210 @@
 {
   "$schema": "./deps.schema.json",
   "checks": [
-    { "label": "homebrew", "kind": "command", "target": "brew" },
-    { "label": "git", "kind": "command", "target": "git" },
-    { "label": "oh-my-zsh", "kind": "file", "target": "$HOME/.oh-my-zsh/oh-my-zsh.sh" },
-    { "label": "powerlevel10k", "kind": "dir", "target": "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" },
-    { "label": "zsh-syntax-highlighting", "kind": "dir", "target": "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" },
-    { "label": "fzf", "kind": "command", "target": "fzf" },
-    { "label": "direnv", "kind": "command", "target": "direnv" },
-    { "label": "zoxide", "kind": "command", "target": "zoxide" },
-    { "label": "go", "kind": "command", "target": "go" },
-    { "label": "go-bin", "kind": "dir", "target": "/usr/local/go/bin" },
-    { "label": "vscode-code", "kind": "command", "target": "code" },
-    { "label": "kubectl", "kind": "command", "target": "kubectl" },
-    { "label": "kubectx", "kind": "command", "target": "kubectx" },
-    { "label": "pnpm", "kind": "command", "target": "pnpm" },
-    { "label": "curlie", "kind": "command", "target": "curlie" },
-    { "label": "codex", "kind": "command", "target": "codex" },
-    { "label": "terraform", "kind": "command", "target": "terraform" },
-    { "label": "nvim", "kind": "command", "target": "nvim" },
-    { "label": "tv", "kind": "command", "target": "tv" },
-    { "label": "rg", "kind": "command", "target": "rg" },
-    { "label": "python3", "kind": "command", "target": "python3" },
-    { "label": "pip3", "kind": "command", "target": "pip3" },
-    { "label": "npm", "kind": "command", "target": "npm" },
-    { "label": "mysql-client", "kind": "dir", "target": "/opt/homebrew/opt/mysql-client/bin" },
-    { "label": "vscode-app-bin", "kind": "dir", "target": "/Applications/Visual Studio Code.app/Contents/Resources/app/bin" },
-    { "label": "choose", "kind": "command", "target": "choose" },
-    { "label": "raycast", "kind": "dir", "target": "/Applications/Raycast.app" },
-    { "label": "tailscale", "kind": "dir", "target": "/Applications/Tailscale.app" }
+    {
+      "label": "homebrew",
+      "kind": "command",
+      "target": "brew"
+    },
+    {
+      "label": "git",
+      "kind": "command",
+      "target": "git"
+    },
+    {
+      "label": "oh-my-zsh",
+      "kind": "file",
+      "target": "$HOME/.oh-my-zsh/oh-my-zsh.sh",
+      "depends": [
+        "git"
+      ]
+    },
+    {
+      "label": "powerlevel10k",
+      "kind": "dir",
+      "target": "$HOME/.oh-my-zsh/custom/themes/powerlevel10k",
+      "depends": [
+        "oh-my-zsh"
+      ]
+    },
+    {
+      "label": "zsh-syntax-highlighting",
+      "kind": "dir",
+      "target": "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting",
+      "depends": [
+        "oh-my-zsh"
+      ]
+    },
+    {
+      "label": "fzf",
+      "kind": "command",
+      "target": "fzf",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "direnv",
+      "kind": "command",
+      "target": "direnv",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "zoxide",
+      "kind": "command",
+      "target": "zoxide",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "go",
+      "kind": "command",
+      "target": "go"
+    },
+    {
+      "label": "go-bin",
+      "kind": "dir",
+      "target": "/usr/local/go/bin",
+      "depends": [
+        "go"
+      ]
+    },
+    {
+      "label": "vscode-code",
+      "kind": "command",
+      "target": "code",
+      "depends": [
+        "vscode-app-bin"
+      ]
+    },
+    {
+      "label": "kubectl",
+      "kind": "command",
+      "target": "kubectl",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "kubectx",
+      "kind": "command",
+      "target": "kubectx",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "krew",
+      "kind": "file",
+      "target": "$HOME/.krew/bin/kubectl-krew",
+      "depends": [
+        "kubectl"
+      ]
+    },
+    {
+      "label": "pnpm",
+      "kind": "command",
+      "target": "pnpm"
+    },
+    {
+      "label": "curlie",
+      "kind": "command",
+      "target": "curlie",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "codex",
+      "kind": "command",
+      "target": "codex",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "terraform",
+      "kind": "command",
+      "target": "terraform",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "nvim",
+      "kind": "command",
+      "target": "nvim",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "tv",
+      "kind": "command",
+      "target": "tv",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "rg",
+      "kind": "command",
+      "target": "rg",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "python3",
+      "kind": "command",
+      "target": "python3"
+    },
+    {
+      "label": "pip3",
+      "kind": "command",
+      "target": "pip3",
+      "depends": [
+        "python3"
+      ]
+    },
+    {
+      "label": "npm",
+      "kind": "command",
+      "target": "npm"
+    },
+    {
+      "label": "mysql-client",
+      "kind": "dir",
+      "target": "/opt/homebrew/opt/mysql-client/bin",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "vscode-app-bin",
+      "kind": "dir",
+      "target": "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+    },
+    {
+      "label": "choose",
+      "kind": "command",
+      "target": "choose",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
+      "label": "raycast",
+      "kind": "dir",
+      "target": "/Applications/Raycast.app"
+    },
+    {
+      "label": "tailscale",
+      "kind": "dir",
+      "target": "/Applications/Tailscale.app"
+    }
   ]
 }

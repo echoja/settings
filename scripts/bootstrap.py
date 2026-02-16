@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from collections import defaultdict, deque
 from typing import Iterable
 
 import typer
@@ -437,8 +438,70 @@ def validate_deps_schema() -> list[str]:
                         errors.append(
                             f"checks[{i}].kind: must be one of {kind_enum}, got '{val}'"
                         )
+                    if field == "depends" and isinstance(val, list):
+                        for dep_val in val:
+                            if not isinstance(dep_val, str):
+                                errors.append(
+                                    f"checks[{i}].depends: items must be strings"
+                                )
+
+            # Label reference check: every depends entry must match an existing label
+            all_labels = {
+                item["label"]
+                for item in checks
+                if isinstance(item, dict) and "label" in item
+            }
+            for i, item in enumerate(checks):
+                if not isinstance(item, dict):
+                    continue
+                for dep in item.get("depends", []):
+                    if dep not in all_labels:
+                        errors.append(
+                            f"checks[{i}].depends: unknown label '{dep}'"
+                        )
+
+            # Cycle detection via topological sort (Kahn's algorithm)
+            in_degree: dict[str, int] = defaultdict(int)
+            dependents: dict[str, list[str]] = defaultdict(list)
+            for item in checks:
+                if not isinstance(item, dict) or "label" not in item:
+                    continue
+                label = item["label"]
+                in_degree.setdefault(label, 0)
+                for dep in item.get("depends", []):
+                    if dep in all_labels:
+                        dependents[dep].append(label)
+                        in_degree[label] += 1
+
+            queue: deque[str] = deque(
+                label for label, deg in in_degree.items() if deg == 0
+            )
+            visited = 0
+            while queue:
+                node = queue.popleft()
+                visited += 1
+                for child in dependents[node]:
+                    in_degree[child] -= 1
+                    if in_degree[child] == 0:
+                        queue.append(child)
+
+            if visited < len(in_degree):
+                cycle_members = sorted(
+                    label for label, deg in in_degree.items() if deg > 0
+                )
+                errors.append(
+                    f"dependency cycle detected among: {', '.join(cycle_members)}"
+                )
 
     return errors
+
+
+def check_json_formatting(file_path: Path) -> bool:
+    with open(file_path, encoding="utf-8") as f:
+        raw = f.read()
+    data = json.loads(raw)
+    expected = json.dumps(data, indent=2) + "\n"
+    return raw == expected
 
 
 def check_hardcoded_paths(file_path: Path) -> list[tuple[int, str]]:
@@ -491,6 +554,13 @@ def verify() -> None:
     # 2. Dependencies
     console.rule("[bold]Dependencies[/bold]", align="left")
     checks = load_dep_checks()
+
+    # Build reverse dependency map: label -> list of labels that depend on it
+    required_by: dict[str, list[str]] = defaultdict(list)
+    for check in checks:
+        for dep in check.get("depends", []):
+            required_by[dep].append(check["label"])
+
     for check in sorted(checks, key=lambda c: c["label"].casefold()):
         label = check["label"]
         kind = check["kind"]
@@ -501,7 +571,11 @@ def verify() -> None:
             console.print(f"[green]OK[/green]      {label} - {kind}: {target}")
             ok += 1
         else:
-            console.print(f"[red]MISSING[/red] {label} - {kind}: {target}")
+            hint = ""
+            if label in required_by:
+                deps = ", ".join(sorted(required_by[label]))
+                hint = f" (required by: {deps})"
+            console.print(f"[red]MISSING[/red] {label} - {kind}: {target}{hint}")
             fail += 1
     console.print()
 
@@ -517,7 +591,21 @@ def verify() -> None:
         ok += 1
     console.print()
 
-    # 4. Hardcoded home paths
+    # 4. JSON formatting
+    console.rule("[bold]JSON formatting[/bold]", align="left")
+    deps_file = repo_root() / "scripts" / "deps.json"
+    if check_json_formatting(deps_file):
+        console.print("[green]OK[/green]      scripts/deps.json")
+        ok += 1
+    else:
+        console.print(
+            "[red]FAIL[/red]    scripts/deps.json not formatted"
+            " (run: python3 -m json.tool --indent 2)"
+        )
+        fail += 1
+    console.print()
+
+    # 5. Hardcoded home paths
     console.rule("[bold]Hardcoded home paths[/bold]", align="left")
     violations = check_hardcoded_paths(repo_root() / ".zshrc")
     if violations:
@@ -529,7 +617,7 @@ def verify() -> None:
         ok += 1
     console.print()
 
-    # 5. Pre-commit
+    # 6. Pre-commit
     console.rule("[bold]Pre-commit[/bold]", align="left")
     if shutil.which("pre-commit"):
         console.print("[green]OK[/green]      pre-commit installed")

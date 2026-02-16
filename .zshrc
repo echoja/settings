@@ -97,6 +97,10 @@ alias k="kubectl"
 # brew install kubectx
 alias kx="kubectx"
 
+# krew (kubectl plugin manager)
+# https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
 # pnpm
 # https://pnpm.io/installation
 alias p="pnpm"
