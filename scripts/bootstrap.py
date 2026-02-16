@@ -690,13 +690,14 @@ def verify() -> None:
         fail += 1
     console.print()
 
-    # 7. Pre-commit
-    console.rule("[bold]Pre-commit[/bold]", align="left")
-    if shutil.which("pre-commit"):
-        console.print("[green]OK[/green]      pre-commit installed")
+    # 7. Pre-commit hooks
+    console.rule("[bold]Pre-commit hooks[/bold]", align="left")
+    hook_file = repo_root() / ".git" / "hooks" / "pre-commit"
+    if hook_file.is_file() and "pre-commit" in hook_file.read_text():
+        console.print("[green]OK[/green]      git hooks installed")
         ok += 1
     else:
-        console.print("[red]MISSING[/red] pre-commit not found")
+        console.print("[red]FAIL[/red]    git hooks not installed (run: pre-commit install)")
         fail += 1
     console.print()
 
