@@ -9,7 +9,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["label", "pattern", "kind", "target"],
+        "required": ["label", "kind", "target"],
         "additionalProperties": false,
         "properties": {
           "label": { "type": "string" },

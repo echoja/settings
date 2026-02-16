@@ -26,6 +26,8 @@
     { "label": "npm", "pattern": "npm config", "kind": "command", "target": "npm" },
     { "label": "mysql-client", "pattern": "/opt/homebrew/opt/mysql-client/bin", "kind": "dir", "target": "/opt/homebrew/opt/mysql-client/bin" },
     { "label": "vscode-app-bin", "pattern": "Visual Studio Code.app/Contents/Resources/app/bin", "kind": "dir", "target": "/Applications/Visual Studio Code.app/Contents/Resources/app/bin" },
-    { "label": "choose", "pattern": "choose 0", "kind": "command", "target": "choose" }
+    { "label": "choose", "pattern": "choose 0", "kind": "command", "target": "choose" },
+    { "label": "raycast", "kind": "dir", "target": "/Applications/Raycast.app" },
+    { "label": "tailscale", "kind": "dir", "target": "/Applications/Tailscale.app" }
   ]
 }
