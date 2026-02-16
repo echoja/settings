@@ -1,5 +1,5 @@
 {
-  "$schema": "./zshrc-deps.schema.json",
+  "$schema": "./deps.schema.json",
   "checks": [
     { "label": "homebrew", "pattern": "/opt/homebrew/bin/brew", "kind": "command", "target": "brew" },
     { "label": "git", "pattern": "plugins=\\(git", "kind": "command", "target": "git" },

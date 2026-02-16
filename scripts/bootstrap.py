@@ -356,7 +356,7 @@ KIND_PREDICATE: dict[str, object] = {
 
 
 def load_dep_checks() -> list[dict]:
-    checks_file = repo_root() / "scripts" / "zshrc-deps.json"
+    checks_file = repo_root() / "scripts" / "deps.json"
     with open(checks_file, encoding="utf-8") as f:
         data = json.load(f)
     home = str(Path.home())
@@ -380,15 +380,15 @@ def has_pattern(pattern: str, zshrc_path: Path) -> bool:
 
 
 def validate_deps_schema() -> list[str]:
-    checks_file = repo_root() / "scripts" / "zshrc-deps.json"
-    schema_file = repo_root() / "scripts" / "zshrc-deps.schema.json"
+    checks_file = repo_root() / "scripts" / "deps.json"
+    schema_file = repo_root() / "scripts" / "deps.schema.json"
     errors: list[str] = []
 
     try:
         with open(checks_file, encoding="utf-8") as f:
             data = json.load(f)
     except (json.JSONDecodeError, OSError) as exc:
-        return [f"cannot load zshrc-deps.json: {exc}"]
+        return [f"cannot load deps.json: {exc}"]
 
     try:
         with open(schema_file, encoding="utf-8") as f:
@@ -534,7 +534,7 @@ def verify() -> None:
             console.print(f"[red]FAIL[/red]    {err}")
             fail += 1
     else:
-        console.print("[green]OK[/green]      scripts/zshrc-deps.json")
+        console.print("[green]OK[/green]      scripts/deps.json")
         ok += 1
     console.print()
 
