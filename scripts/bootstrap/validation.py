@@ -6,17 +6,17 @@ from collections import defaultdict, deque
 from collections.abc import Callable
 from pathlib import Path
 
+import jsonschema
+
 from .utils import repo_root
 
 
 def validate_json_schema(
     json_path: Path,
     schema_path: Path,
-    array_key: str,
     *,
-    skip_type_check_fields: frozenset[str] = frozenset(),
-    extra_item_validator: Callable[[int, dict, dict, list[str]], None] | None = None,
     extra_validator: Callable[[list, list[str]], None] | None = None,
+    array_key: str | None = None,
 ) -> list[str]:
     errors: list[str] = []
 
@@ -32,73 +32,20 @@ def validate_json_schema(
     except (json.JSONDecodeError, OSError) as exc:
         return [f"cannot load schema: {exc}"]
 
-    if not isinstance(data, dict):
-        return ["root must be an object"]
+    try:
+        jsonschema.validate(data, schema)
+    except jsonschema.ValidationError as exc:
+        errors.append(exc.message)
 
-    for key in schema.get("required", []):
-        if key not in data:
-            errors.append(f"missing required key: {key}")
-
-    allowed_keys = set(schema.get("properties", {}).keys())
-    if schema.get("additionalProperties") is False:
-        for key in data:
-            if key not in allowed_keys:
-                errors.append(f"unexpected key: {key}")
-
-    items = data.get(array_key)
-    if items is not None:
-        if not isinstance(items, list):
-            errors.append(f"'{array_key}' must be an array")
-        else:
-            item_schema = (
-                schema.get("properties", {}).get(array_key, {}).get("items", {})
-            )
-            required_fields = item_schema.get("required", [])
-            allowed_fields = set(item_schema.get("properties", {}).keys())
-            no_additional = item_schema.get("additionalProperties") is False
-
-            for i, item in enumerate(items):
-                if not isinstance(item, dict):
-                    errors.append(f"{array_key}[{i}]: must be an object")
-                    continue
-                for field in required_fields:
-                    if field not in item:
-                        errors.append(f"{array_key}[{i}]: missing required field: {field}")
-                if no_additional:
-                    for key in item:
-                        if key not in allowed_fields:
-                            errors.append(f"{array_key}[{i}]: unexpected field: {key}")
-                for field, prop_schema in item_schema.get("properties", {}).items():
-                    if field not in item:
-                        continue
-                    val = item[field]
-                    if field not in skip_type_check_fields:
-                        if prop_schema.get("type") == "string" and not isinstance(
-                            val, str
-                        ):
-                            errors.append(f"{array_key}[{i}].{field}: must be a string")
-                    enum_vals = prop_schema.get("enum")
-                    if enum_vals and val not in enum_vals:
-                        errors.append(
-                            f"{array_key}[{i}].{field}: must be one of {enum_vals}, got '{val}'"
-                        )
-                if extra_item_validator:
-                    extra_item_validator(i, item, item_schema, errors)
-
-            if extra_validator:
-                extra_validator(items, errors)
+    if extra_validator and array_key:
+        items = data.get(array_key)
+        if isinstance(items, list):
+            extra_validator(items, errors)
 
     return errors
 
 
 def validate_deps_schema() -> list[str]:
-    def _item_validator(i: int, item: dict, item_schema: dict, errors: list[str]) -> None:
-        depends = item.get("depends")
-        if isinstance(depends, list):
-            for dep_val in depends:
-                if not isinstance(dep_val, str):
-                    errors.append(f"checks[{i}].depends: items must be strings")
-
     def _extra_validator(items: list, errors: list[str]) -> None:
         all_labels = {
             item["label"]
@@ -149,8 +96,7 @@ def validate_deps_schema() -> list[str]:
     return validate_json_schema(
         repo_root() / "scripts" / "deps.json",
         repo_root() / "scripts" / "deps.schema.json",
-        "checks",
-        extra_item_validator=_item_validator,
+        array_key="checks",
         extra_validator=_extra_validator,
     )
 
@@ -159,8 +105,6 @@ def validate_defaults_schema() -> list[str]:
     return validate_json_schema(
         repo_root() / "scripts" / "macos-defaults.json",
         repo_root() / "scripts" / "macos-defaults.schema.json",
-        "defaults",
-        skip_type_check_fields=frozenset({"value"}),
     )
 
 
@@ -168,7 +112,6 @@ def validate_links_schema() -> list[str]:
     return validate_json_schema(
         repo_root() / "scripts" / "links.json",
         repo_root() / "scripts" / "links.schema.json",
-        "links",
     )
 
 

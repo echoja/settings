@@ -4,5 +4,11 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.14"
 dependencies = [
+    "jsonschema>=4.23",
     "typer>=0.21.0",
+]
+
+[dependency-groups]
+dev = [
+    "types-jsonschema>=4.26.0.20260202",
 ]
