@@ -208,7 +208,24 @@ def verify() -> None:
         fail += 1
     console.print()
 
-    # 10. macOS defaults
+    # 10. Pyright type-checking
+    console.rule("[bold]Pyright type-checking[/bold]", align="left", style="dim")
+    pyright_result = subprocess.run(
+        ["uv", "run", "--frozen", "pyright"],
+        capture_output=True, text=True, cwd=repo_root(),
+    )
+    if pyright_result.returncode == 0:
+        console.print("[green]OK[/green]      pyright")
+        ok += 1
+    else:
+        console.print("[red]FAIL[/red]    pyright")
+        output = (pyright_result.stdout + pyright_result.stderr).strip()
+        if output:
+            console.print(output)
+        fail += 1
+    console.print()
+
+    # 11. macOS defaults
     if platform.system() == "Darwin":
         console.rule("[bold]macOS defaults[/bold]", align="left", style="dim")
         entries = load_defaults_entries()

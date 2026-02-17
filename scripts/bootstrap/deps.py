@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 import os
 import shutil
+from collections.abc import Callable
 from pathlib import Path
 
 from .utils import repo_root
 
-KIND_PREDICATE: dict[str, object] = {
+KIND_PREDICATE: dict[str, Callable[[str], object]] = {
     "command": shutil.which,
     "dir": os.path.isdir,
     "file": os.path.isfile,

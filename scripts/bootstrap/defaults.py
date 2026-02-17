@@ -89,7 +89,7 @@ def values_equal(a: object, b: object, type_: str) -> bool:
         return bool(a) == bool(b)
     if type_ == "float":
         try:
-            return math.isclose(float(a), float(b), rel_tol=1e-9)
+            return math.isclose(float(str(a)), float(str(b)), rel_tol=1e-9)
         except (TypeError, ValueError):
             return False
     return a == b
