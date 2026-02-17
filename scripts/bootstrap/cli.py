@@ -68,7 +68,7 @@ def verify() -> None:
     ok = fail = 0
 
     # 1. Symlink health
-    console.rule("[bold]Symlink health[/bold]", align="left")
+    console.rule("[bold]Symlink health[/bold]", align="left", style="dim")
     for item in load_link_items():
         st, detail = status_of(item)
         if st == "linked":
@@ -81,7 +81,7 @@ def verify() -> None:
     console.print()
 
     # 2. Dependencies
-    console.rule("[bold]Dependencies[/bold]", align="left")
+    console.rule("[bold]Dependencies[/bold]", align="left", style="dim")
     checks = load_dep_checks()
 
     # Build reverse dependency map: label -> list of labels that depend on it
@@ -113,7 +113,7 @@ def verify() -> None:
     console.print()
 
     # 3. JSON schema validation
-    console.rule("[bold]JSON schema validation[/bold]", align="left")
+    console.rule("[bold]JSON schema validation[/bold]", align="left", style="dim")
     schema_errors = validate_deps_schema()
     if schema_errors:
         for err in schema_errors:
@@ -143,7 +143,7 @@ def verify() -> None:
     console.print()
 
     # 4. JSON formatting
-    console.rule("[bold]JSON formatting[/bold]", align="left")
+    console.rule("[bold]JSON formatting[/bold]", align="left", style="dim")
     for json_name in ("deps.json", "macos-defaults.json", "links.json"):
         json_file = repo_root() / "scripts" / json_name
         if check_json_formatting(json_file):
@@ -158,7 +158,7 @@ def verify() -> None:
     console.print()
 
     # 5. Hardcoded home paths
-    console.rule("[bold]Hardcoded home paths[/bold]", align="left")
+    console.rule("[bold]Hardcoded home paths[/bold]", align="left", style="dim")
     violations = check_hardcoded_paths(repo_root() / ".zshrc")
     if violations:
         for lineno, line in violations:
@@ -170,21 +170,21 @@ def verify() -> None:
     console.print()
 
     # 6. GPG signing
-    console.rule("[bold]GPG signing[/bold]", align="left")
+    console.rule("[bold]GPG signing[/bold]", align="left", style="dim")
     gpg_ok, gpg_fail = verify_gpg_signing()
     ok += gpg_ok
     fail += gpg_fail
     console.print()
 
     # 7. SSH keys
-    console.rule("[bold]SSH keys[/bold]", align="left")
+    console.rule("[bold]SSH keys[/bold]", align="left", style="dim")
     ssh_ok, ssh_fail = verify_ssh_keys()
     ok += ssh_ok
     fail += ssh_fail
     console.print()
 
     # 8. Keychain hygiene
-    console.rule("[bold]Keychain hygiene[/bold]", align="left")
+    console.rule("[bold]Keychain hygiene[/bold]", align="left", style="dim")
     r = subprocess.run(
         ["security", "find-generic-password", "-s", "bw-master", "-a", "bitwarden"],
         capture_output=True, text=True,
@@ -198,7 +198,7 @@ def verify() -> None:
     console.print()
 
     # 9. Pre-commit hooks
-    console.rule("[bold]Pre-commit hooks[/bold]", align="left")
+    console.rule("[bold]Pre-commit hooks[/bold]", align="left", style="dim")
     hook_file = repo_root() / ".git" / "hooks" / "pre-commit"
     if hook_file.is_file() and "pre-commit" in hook_file.read_text():
         console.print("[green]OK[/green]      git hooks installed")
@@ -210,7 +210,7 @@ def verify() -> None:
 
     # 10. macOS defaults
     if platform.system() == "Darwin":
-        console.rule("[bold]macOS defaults[/bold]", align="left")
+        console.rule("[bold]macOS defaults[/bold]", align="left", style="dim")
         entries = load_defaults_entries()
         for entry in entries:
             st, raw = read_default(entry.domain, entry.key)
@@ -239,7 +239,7 @@ def verify() -> None:
         summary += f", [red]{fail} fail[/red]"
     else:
         summary += f", {fail} fail"
-    console.rule(f"[bold]Summary: {summary}[/bold]", align="left")
+    console.rule(f"[bold]Summary: {summary}[/bold]", align="left", style="dim")
     if fail > 0:
         raise typer.Exit(1)
 
