@@ -151,6 +151,14 @@
       ]
     },
     {
+      "label": "tmux",
+      "kind": "command",
+      "target": "tmux",
+      "depends": [
+        "homebrew"
+      ]
+    },
+    {
       "label": "tv",
       "kind": "command",
       "target": "tv",
