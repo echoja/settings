@@ -111,7 +111,7 @@ alias c="curlie"
 
 # codex
 # brew install codex
-alias cdx="codex -m gpt-5.3-codex -c model_reasoning_effort=xhigh --yolo"
+alias cdx="codex --yolo"
 
 # source
 alias s="source ~/.zshrc"
