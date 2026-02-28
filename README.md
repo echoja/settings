@@ -29,6 +29,28 @@ $ ./scripts/bootstrap.py --help
 $ ./v
 ```
 
+## Manual install steps
+
+Some dependencies require `sudo` or interactive setup and cannot be automated by the bootstrap script.
+
+```sh
+# Go (official installer)
+curl -fSL -o /tmp/go.pkg https://go.dev/dl/go1.26.0.darwin-arm64.pkg
+sudo installer -pkg /tmp/go.pkg -target /
+
+# Docker
+brew install --cask docker
+
+# Zoom
+brew install --cask zoom
+
+# RunCat (App Store only, no brew cask)
+mas install 1429033973
+
+# VS Code Settings Sync (built-in, requires interactive sign-in)
+# Open VS Code → Cmd+Shift+P → "Settings Sync: Turn On..."
+```
+
 ## Pre-commit
 
 - `.zshrc`에 `/Users/<name>` 또는 `/home/<name>` 형태의 하드코딩된 home 경로가 들어가면 실패합니다.
