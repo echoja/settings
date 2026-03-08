@@ -10,7 +10,8 @@
     {
       "label": "git",
       "kind": "command",
-      "target": "git"
+      "target": "git",
+      "install": "https://git-scm.com/downloads"
     },
     {
       "label": "oh-my-zsh",
@@ -45,7 +46,8 @@
       "target": "fzf",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install fzf"
     },
     {
       "label": "direnv",
@@ -53,7 +55,8 @@
       "target": "direnv",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install direnv"
     },
     {
       "label": "zoxide",
@@ -61,7 +64,8 @@
       "target": "zoxide",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install zoxide"
     },
     {
       "label": "go",
@@ -75,7 +79,8 @@
       "target": "/usr/local/go/bin",
       "depends": [
         "go"
-      ]
+      ],
+      "install": "https://go.dev/doc/install"
     },
     {
       "label": "vscode-code",
@@ -83,7 +88,8 @@
       "target": "code",
       "depends": [
         "vscode-app-bin"
-      ]
+      ],
+      "install": "https://code.visualstudio.com/"
     },
     {
       "label": "kubectl",
@@ -124,7 +130,8 @@
       "target": "curlie",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install curlie"
     },
     {
       "label": "codex",
@@ -132,7 +139,8 @@
       "target": "codex",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install --cask codex"
     },
     {
       "label": "terraform",
@@ -140,7 +148,8 @@
       "target": "terraform",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install terraform"
     },
     {
       "label": "nvim",
@@ -148,7 +157,8 @@
       "target": "nvim",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install neovim"
     },
     {
       "label": "tmux",
@@ -156,7 +166,8 @@
       "target": "tmux",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install tmux"
     },
     {
       "label": "tv",
@@ -164,7 +175,8 @@
       "target": "tv",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install television"
     },
     {
       "label": "rg",
@@ -172,12 +184,14 @@
       "target": "rg",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install ripgrep"
     },
     {
       "label": "python3",
       "kind": "command",
-      "target": "python3"
+      "target": "python3",
+      "install": "https://www.python.org/downloads/"
     },
     {
       "label": "pip3",
@@ -185,12 +199,14 @@
       "target": "pip3",
       "depends": [
         "python3"
-      ]
+      ],
+      "install": "https://pip.pypa.io/en/stable/installation/"
     },
     {
       "label": "npm",
       "kind": "command",
-      "target": "npm"
+      "target": "npm",
+      "install": "https://nodejs.org/"
     },
     {
       "label": "mysql-client",
@@ -198,7 +214,8 @@
       "target": "/opt/homebrew/opt/mysql-client/bin",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install mysql-client"
     },
     {
       "label": "vscode-app-bin",
@@ -212,7 +229,8 @@
       "target": "choose",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install choose"
     },
     {
       "label": "raycast",
@@ -232,7 +250,8 @@
       "target": "argocd",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install argocd"
     },
     {
       "label": "asdf",
@@ -240,7 +259,8 @@
       "target": "asdf",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install asdf"
     },
     {
       "label": "bitwarden-cli",
@@ -248,7 +268,8 @@
       "target": "bw",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install bitwarden-cli"
     },
     {
       "label": "gemini-cli",
@@ -256,7 +277,8 @@
       "target": "gemini",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install gemini-cli"
     },
     {
       "label": "gh",
@@ -264,7 +286,8 @@
       "target": "gh",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install gh"
     },
     {
       "label": "terminal-notifier",
@@ -272,7 +295,8 @@
       "target": "terminal-notifier",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install terminal-notifier"
     },
     {
       "label": "pre-commit",
@@ -280,7 +304,8 @@
       "target": "pre-commit",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install pre-commit"
     },
     {
       "label": "pinentry-mac",
@@ -288,7 +313,8 @@
       "target": "pinentry-mac",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install pinentry-mac"
     },
     {
       "label": "saml2aws",
@@ -296,7 +322,8 @@
       "target": "saml2aws",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install saml2aws"
     },
     {
       "label": "doctl",
@@ -304,7 +331,8 @@
       "target": "doctl",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install doctl"
     },
     {
       "label": "mas",
@@ -312,7 +340,8 @@
       "target": "mas",
       "depends": [
         "homebrew"
-      ]
+      ],
+      "install": "brew install mas"
     },
     {
       "label": "docker",
@@ -484,6 +513,24 @@
         "mas"
       ],
       "install": "mas install 1352778147"
+    },
+    {
+      "label": "amphetamine",
+      "kind": "dir",
+      "target": "/Applications/Amphetamine.app",
+      "depends": [
+        "mas"
+      ],
+      "install": "mas install 937984704"
+    },
+    {
+      "label": "go-passbolt-cli",
+      "kind": "command",
+      "target": "passbolt",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install passbolt/tap/go-passbolt-cli"
     }
   ]
 }

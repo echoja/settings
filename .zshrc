@@ -245,6 +245,17 @@ function bw-unlock() {
   fi
 }
 
+# passbolt CLI automation (passphrase + private key from Bitwarden, cached in env)
+function pb() {
+  if [[ -z "$PASSBOLT_PASSWORD" || -z "$PASSBOLT_PRIVATE_KEY" ]]; then
+    echo "Fetching Passbolt credentials from Bitwarden..."
+    bw-unlock
+    export PASSBOLT_PASSWORD=$(bw get password e5594a14-35c6-46d3-b62b-b25e001bf147) || { echo "Failed to get Passbolt passphrase"; return 1; }
+    export PASSBOLT_PRIVATE_KEY=$(bw get notes 781af37c-6890-4b2e-a684-b25f0078f6d4) || { echo "Failed to get Passbolt private key"; return 1; }
+  fi
+  passbolt --userPassword "$PASSBOLT_PASSWORD" --userPrivateKeyFile <(echo "$PASSBOLT_PRIVATE_KEY") "$@"
+}
+
 # saml2aws login automation using Bitwarden
 # Usage: saml-login
 function saml-login() {
