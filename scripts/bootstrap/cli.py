@@ -269,6 +269,18 @@ def verify() -> None:
                     f" (enable: {hint})"
                 )
                 fail += 1
+
+        # Tailscale
+        ts = subprocess.run(
+            ["/Applications/Tailscale.app/Contents/MacOS/Tailscale", "status"],
+            capture_output=True, text=True,
+        )
+        if ts.returncode == 0:
+            console.print("[green]OK[/green]      Tailscale connected")
+            ok += 1
+        else:
+            console.print("[red]FAIL[/red]    Tailscale not running (open Tailscale app)")
+            fail += 1
         console.print()
 
     # Summary
