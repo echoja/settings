@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import platform
+import socket
 import subprocess
 from collections import defaultdict
 
@@ -246,6 +247,26 @@ def verify() -> None:
                 console.print(
                     f"[red]DRIFT[/red]   {entry.key}:"
                     f" saved={entry.value!r} current={current!r}"
+                )
+                fail += 1
+        console.print()
+
+    # 12. Remote access
+    if platform.system() == "Darwin":
+        console.rule("[bold]Remote access[/bold]", align="left", style="dim")
+        remote_checks: list[tuple[str, int, str]] = [
+            ("Remote Login (SSH)", 22, "sudo systemsetup -f -setremotelogin on"),
+            ("Screen Sharing", 5900, "sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist"),
+        ]
+        for label, port, hint in remote_checks:
+            try:
+                with socket.create_connection(("localhost", port), timeout=1.0):
+                    console.print(f"[green]OK[/green]      {label} (port {port})")
+                    ok += 1
+            except (OSError, TimeoutError):
+                console.print(
+                    f"[red]FAIL[/red]    {label} not enabled"
+                    f" (enable: {hint})"
                 )
                 fail += 1
         console.print()

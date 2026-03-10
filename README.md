@@ -47,6 +47,12 @@ brew install --cask zoom
 # RunCat (App Store only, no brew cask)
 mas install 1429033973
 
+# Remote Login (SSH)
+sudo systemsetup -f -setremotelogin on
+
+# Screen Sharing
+sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist
+
 # VS Code Settings Sync (built-in, requires interactive sign-in)
 # Open VS Code → Cmd+Shift+P → "Settings Sync: Turn On..."
 ```
