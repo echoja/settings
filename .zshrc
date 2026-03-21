@@ -64,13 +64,6 @@ export PATH="/usr/local/go/bin:$(go env GOPATH)/bin:$PATH"
 # ######## 사용자정의 alias 또는 function 추가 #################################
 # ##############################################################################
 
-# asdf
-export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
-# append completions to fpath
-fpath=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
-# initialise completions with ZSH's compinit
-autoload -Uz compinit && compinit
-
 
 # vscode shell integration
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
@@ -314,3 +307,8 @@ export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
 # OpenClaw Completion
 source "${HOME}/.openclaw/completions/openclaw.zsh"
+
+eval "$(mise activate zsh)"
+
+# Codenbutter shared functions (pb, saml-login, etc.)
+source "${HOME}/codenbutter-knowledge-base/scripts/shell-functions.sh"

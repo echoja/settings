@@ -254,15 +254,6 @@
       "install": "brew install argocd"
     },
     {
-      "label": "asdf",
-      "kind": "command",
-      "target": "asdf",
-      "depends": [
-        "homebrew"
-      ],
-      "install": "brew install asdf"
-    },
-    {
       "label": "bitwarden-cli",
       "kind": "command",
       "target": "bw",
