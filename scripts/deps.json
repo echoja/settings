@@ -522,6 +522,15 @@
         "homebrew"
       ],
       "install": "brew install passbolt/tap/go-passbolt-cli"
+    },
+    {
+      "label": "yq",
+      "kind": "command",
+      "target": "yq",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install yq"
     }
   ]
 }
