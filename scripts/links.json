@@ -20,6 +20,10 @@
     {
       "key": ".claude/CLAUDE.md",
       "description": "User-scope Claude Code instructions"
+    },
+    {
+      "key": ".tmux.conf",
+      "description": "tmux config"
     }
   ]
 }

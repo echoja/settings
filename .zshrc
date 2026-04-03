@@ -12,6 +12,11 @@ fi
 export HISTSIZE=1000000
 export SAVEHIST=1000000
 
+# Auto-attach to tmux on SSH
+if [[ -n "$SSH_CONNECTION" ]] && [[ -z "$TMUX" ]]; then
+  tmux attach -t remote 2>/dev/null || tmux new -s remote
+fi
+
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
