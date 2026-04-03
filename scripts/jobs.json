@@ -12,6 +12,18 @@
       "environment": {
         "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
       }
+    },
+    {
+      "label": "com.echoja.brew-upgrade-claude",
+      "description": "Daily auto-upgrade of Claude CLI via Homebrew",
+      "script": "scripts/brew-upgrade-claude.sh",
+      "schedule": {
+        "hour": 10,
+        "minute": 0
+      },
+      "environment": {
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+      }
     }
   ]
 }
