@@ -30,18 +30,32 @@ from .symlinks import (
     status_label,
     status_of,
 )
-from .utils import console, repo_root, require_darwin
+from .launchd import (
+    _plist_path,
+    bootstrap_job,
+    bootout_job,
+    is_job_loaded,
+    is_plist_current,
+    is_script_executable,
+    is_script_present,
+    load_job_entries,
+    write_plist,
+)
+from .utils import console, display_path, repo_root, require_darwin
 from .validation import (
     check_hardcoded_paths,
     check_json_formatting,
     validate_defaults_schema,
     validate_deps_schema,
+    validate_jobs_schema,
     validate_links_schema,
 )
 
 app = typer.Typer(add_completion=False, help="Bootstrap your environment: link dotfiles, check dependencies, and more.")
 defaults_app = typer.Typer(help="Manage macOS system defaults.")
 app.add_typer(defaults_app, name="defaults")
+jobs_app = typer.Typer(help="Manage launchd jobs.")
+app.add_typer(jobs_app, name="jobs")
 
 
 @app.callback(invoke_without_command=True)
@@ -141,11 +155,20 @@ def verify() -> None:
     else:
         console.print("[green]OK[/green]      scripts/links.json")
         ok += 1
+
+    jobs_schema_errors = validate_jobs_schema()
+    if jobs_schema_errors:
+        for err in jobs_schema_errors:
+            console.print(f"[red]FAIL[/red]    {err}")
+            fail += 1
+    else:
+        console.print("[green]OK[/green]      scripts/jobs.json")
+        ok += 1
     console.print()
 
     # 4. JSON formatting
     console.rule("[bold]JSON formatting[/bold]", align="left", style="dim")
-    for json_name in ("deps.json", "macos-defaults.json", "links.json"):
+    for json_name in ("deps.json", "macos-defaults.json", "links.json", "jobs.json"):
         json_file = repo_root() / "scripts" / json_name
         if check_json_formatting(json_file):
             console.print(f"[green]OK[/green]      scripts/{json_name}")
@@ -281,6 +304,36 @@ def verify() -> None:
         else:
             console.print("[red]FAIL[/red]    Tailscale not running (open Tailscale app)")
             fail += 1
+        console.print()
+
+    # 13. Launchd jobs
+    if platform.system() == "Darwin":
+        console.rule("[bold]Launchd jobs[/bold]", align="left", style="dim")
+        for entry in load_job_entries():
+            if not is_script_present(entry):
+                console.print(f"[red]FAIL[/red]    {entry.label} - script missing: {entry.script}")
+                fail += 1
+                continue
+            if not is_script_executable(entry):
+                console.print(f"[red]FAIL[/red]    {entry.label} - script not executable: {entry.script}")
+                fail += 1
+                continue
+            if not is_plist_current(entry):
+                console.print(
+                    f"[red]FAIL[/red]    {entry.label} - plist missing or outdated"
+                    " (run: ./scripts/bootstrap.py jobs apply -y)"
+                )
+                fail += 1
+                continue
+            if not is_job_loaded(entry.label):
+                console.print(
+                    f"[red]FAIL[/red]    {entry.label} - not loaded"
+                    " (run: ./scripts/bootstrap.py jobs apply -y)"
+                )
+                fail += 1
+                continue
+            console.print(f"[green]OK[/green]      {entry.label}")
+            ok += 1
         console.print()
 
     # Summary
@@ -439,3 +492,141 @@ def defaults_diff() -> None:
 
     if has_diff:
         raise typer.Exit(1)
+
+
+# ── jobs commands ──────────────────────────────────────────────────────
+
+
+@jobs_app.command("apply")
+def jobs_apply(
+    yes: bool = typer.Option(False, "-y", "--yes", help="Skip confirmations."),
+) -> None:
+    """Generate plist files and load launchd jobs."""
+    require_darwin()
+
+    entries = load_job_entries()
+    actions: list[str] = []
+    for entry in entries:
+        if not is_script_present(entry):
+            console.print(f"[red]FAIL[/red]    {entry.label} - script missing: {entry.script}")
+            raise typer.Exit(1)
+        needs_plist = not is_plist_current(entry)
+        needs_load = not is_job_loaded(entry.label)
+        if needs_plist or needs_load:
+            parts = []
+            if needs_plist:
+                parts.append("write plist")
+            if needs_load:
+                parts.append("load")
+            actions.append(f"  {entry.label}: {', '.join(parts)}")
+
+    if not actions:
+        console.print("[green]All jobs already applied[/green]")
+        return
+
+    for line in actions:
+        console.print(line)
+
+    if not yes:
+        if not typer.confirm(f"\nApply {len(actions)} job(s)?", default=False):
+            console.print("Aborted.")
+            return
+
+    for entry in entries:
+        needs_plist = not is_plist_current(entry)
+        needs_load = not is_job_loaded(entry.label)
+        if not needs_plist and not needs_load:
+            continue
+
+        if is_job_loaded(entry.label):
+            bootout_job(entry.label)
+
+        path = write_plist(entry)
+        console.print(f"[green]OK[/green]      wrote {display_path(path)}")
+
+        r = bootstrap_job(entry.label)
+        if r.returncode != 0:
+            console.print(f"[red]FAIL[/red]    launchctl bootstrap: {r.stderr.strip()}")
+        else:
+            console.print(f"[green]OK[/green]      loaded {entry.label}")
+
+
+@jobs_app.command("remove")
+def jobs_remove(
+    labels: list[str] = typer.Argument(
+        None,
+        help="Job labels to remove (default: all).",
+        show_default=False,
+    ),
+    yes: bool = typer.Option(False, "-y", "--yes", help="Skip confirmations."),
+) -> None:
+    """Unload launchd jobs and delete plist files."""
+    require_darwin()
+
+    entries = load_job_entries()
+    if labels:
+        label_set = set(labels)
+        entries = [e for e in entries if e.label in label_set]
+        unknown = label_set - {e.label for e in entries}
+        if unknown:
+            console.print(f"[red]Unknown label(s): {', '.join(sorted(unknown))}[/red]")
+            raise typer.Exit(1)
+
+    if not entries:
+        console.print("No jobs to remove.")
+        return
+
+    for entry in entries:
+        console.print(f"  {entry.label}")
+
+    if not yes:
+        if not typer.confirm(f"\nRemove {len(entries)} job(s)?", default=False):
+            console.print("Aborted.")
+            return
+
+    for entry in entries:
+        if is_job_loaded(entry.label):
+            r = bootout_job(entry.label)
+            if r.returncode != 0:
+                console.print(f"[red]FAIL[/red]    bootout {entry.label}: {r.stderr.strip()}")
+            else:
+                console.print(f"[green]OK[/green]      unloaded {entry.label}")
+        plist = _plist_path(entry.label)
+        if plist.is_file():
+            plist.unlink()
+            console.print(f"[green]OK[/green]      deleted {display_path(plist)}")
+
+
+@jobs_app.command("status")
+def jobs_status() -> None:
+    """Show status of all launchd jobs."""
+    require_darwin()
+
+    entries = load_job_entries()
+    if not entries:
+        console.print("No jobs configured.")
+        return
+
+    for entry in entries:
+        parts: list[str] = []
+
+        if is_script_present(entry):
+            if is_script_executable(entry):
+                parts.append("[green]script ok[/green]")
+            else:
+                parts.append("[red]script not executable[/red]")
+        else:
+            parts.append("[red]script missing[/red]")
+
+        if is_plist_current(entry):
+            parts.append("[green]plist ok[/green]")
+        else:
+            parts.append("[red]plist missing/outdated[/red]")
+
+        if is_job_loaded(entry.label):
+            parts.append("[green]loaded[/green]")
+        else:
+            parts.append("[red]not loaded[/red]")
+
+        console.print(f"  {entry.label}: {', '.join(parts)}")
+        console.print(f"    {entry.description}")

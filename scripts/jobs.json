@@ -1,0 +1,17 @@
+{
+  "$schema": "./jobs.schema.json",
+  "jobs": [
+    {
+      "label": "com.echoja.settings-pull",
+      "description": "Daily auto-pull of settings repo",
+      "script": "scripts/auto-pull.sh",
+      "schedule": {
+        "hour": 9,
+        "minute": 0
+      },
+      "environment": {
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+      }
+    }
+  ]
+}

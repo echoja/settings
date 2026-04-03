@@ -115,6 +115,32 @@ def validate_links_schema() -> list[str]:
     )
 
 
+def validate_jobs_schema() -> list[str]:
+    def _extra_validator(items: list, errors: list[str]) -> None:
+        seen: dict[str, int] = {}
+        for i, item in enumerate(items):
+            if not isinstance(item, dict):
+                continue
+            label = item.get("label", "")
+            if label in seen:
+                errors.append(
+                    f"jobs[{i}]: duplicate label '{label}' (first at jobs[{seen[label]}])"
+                )
+            else:
+                seen[label] = i
+
+            script = item.get("script", "")
+            if script and not (repo_root() / script).is_file():
+                errors.append(f"jobs[{i}]: script not found: {script}")
+
+    return validate_json_schema(
+        repo_root() / "scripts" / "jobs.json",
+        repo_root() / "scripts" / "jobs.schema.json",
+        array_key="jobs",
+        extra_validator=_extra_validator,
+    )
+
+
 def check_json_formatting(file_path: Path) -> bool:
     with open(file_path, encoding="utf-8") as f:
         raw = f.read()
