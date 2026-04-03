@@ -81,6 +81,8 @@ export AWS_REGION=ap-northeast-2
 alias ssh-cinesopa="ssh -i ~/LightsailDefaultKey-ap-northeast-ezkorry.pem bitnami@13.209.62.19"
 export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
+alias ssh-mini="ssh echoja@100.91.78.22"
+
 alias e="exit"
 
 # python
