@@ -24,6 +24,18 @@
       "environment": {
         "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
       }
+    },
+    {
+      "label": "com.echoja.omz-update",
+      "description": "Daily auto-update of Oh My Zsh",
+      "script": "scripts/omz-update.sh",
+      "schedule": {
+        "hour": 10,
+        "minute": 30
+      },
+      "environment": {
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+      }
     }
   ]
 }
