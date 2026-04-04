@@ -279,7 +279,7 @@ def verify() -> None:
         console.rule("[bold]Remote access[/bold]", align="left", style="dim")
         remote_checks: list[tuple[str, int, str]] = [
             ("Remote Login (SSH)", 22, "sudo systemsetup -f -setremotelogin on"),
-            ("Screen Sharing", 5900, "sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist"),
+            ("Screen Sharing", 5900, "sudo launchctl bootstrap system /System/Library/LaunchDaemons/com.apple.screensharing.plist"),
         ]
         for label, port, hint in remote_checks:
             try:
@@ -294,15 +294,19 @@ def verify() -> None:
                 fail += 1
 
         # Tailscale
-        ts = subprocess.run(
-            ["/Applications/Tailscale.app/Contents/MacOS/Tailscale", "status"],
-            capture_output=True, text=True,
-        )
-        if ts.returncode == 0:
-            console.print("[green]OK[/green]      Tailscale connected")
-            ok += 1
-        else:
-            console.print("[red]FAIL[/red]    Tailscale not running (open Tailscale app)")
+        try:
+            ts = subprocess.run(
+                ["/Applications/Tailscale.app/Contents/MacOS/Tailscale", "status"],
+                capture_output=True, text=True,
+            )
+            if ts.returncode == 0:
+                console.print("[green]OK[/green]      Tailscale connected")
+                ok += 1
+            else:
+                console.print("[red]FAIL[/red]    Tailscale not running (open Tailscale app)")
+                fail += 1
+        except FileNotFoundError:
+            console.print("[red]FAIL[/red]    Tailscale not installed")
             fail += 1
         console.print()
 
