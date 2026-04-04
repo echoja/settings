@@ -24,6 +24,10 @@
     {
       "key": ".tmux.conf",
       "description": "tmux config"
+    },
+    {
+      "key": ".p10k.zsh",
+      "description": "Powerlevel10k prompt config"
     }
   ]
 }
