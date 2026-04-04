@@ -308,6 +308,15 @@
       "install": "brew install pinentry-mac"
     },
     {
+      "label": "gnupg",
+      "kind": "command",
+      "target": "gpg",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install gnupg"
+    },
+    {
       "label": "saml2aws",
       "kind": "command",
       "target": "saml2aws",
@@ -461,15 +470,6 @@
       "install": "brew install --cask telegram"
     },
     {
-      "label": "zoom",
-      "kind": "dir",
-      "target": "/Applications/zoom.us.app",
-      "depends": [
-        "homebrew"
-      ],
-      "install": "brew install --cask zoom"
-    },
-    {
       "label": "chatgpt",
       "kind": "dir",
       "target": "/Applications/ChatGPT.app",
@@ -513,15 +513,6 @@
         "mas"
       ],
       "install": "mas install 937984704"
-    },
-    {
-      "label": "go-passbolt-cli",
-      "kind": "command",
-      "target": "passbolt",
-      "depends": [
-        "homebrew"
-      ],
-      "install": "brew install passbolt/tap/go-passbolt-cli"
     },
     {
       "label": "yq",
