@@ -531,6 +531,15 @@
         "homebrew"
       ],
       "install": "brew install yq"
+    },
+    {
+      "label": "typescript-language-server",
+      "kind": "command",
+      "target": "typescript-language-server",
+      "depends": [
+        "npm"
+      ],
+      "install": "npm install -g typescript-language-server typescript"
     }
   ]
 }
