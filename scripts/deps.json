@@ -515,6 +515,15 @@
       "install": "mas install 937984704"
     },
     {
+      "label": "kakaotalk",
+      "kind": "dir",
+      "target": "/Applications/KakaoTalk.app",
+      "depends": [
+        "mas"
+      ],
+      "install": "mas install 869223134"
+    },
+    {
       "label": "yq",
       "kind": "command",
       "target": "yq",
@@ -540,6 +549,12 @@
         "homebrew"
       ],
       "install": "brew install mise"
+    },
+    {
+      "label": "d2coding-font",
+      "kind": "file",
+      "target": "$HOME/Library/Fonts/D2Coding-Ver1.3.2-20180524.ttf",
+      "install": "https://github.com/naver/d2codingfont/releases/download/VER1.3.2/D2Coding-Ver1.3.2-20180524.zip"
     }
   ]
 }
