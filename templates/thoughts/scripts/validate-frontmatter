@@ -1,0 +1,218 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+#
+# Generic YAML front-matter validator for thoughts/ documents.
+#
+# Enforced paths (hardcoded):
+#   thoughts/research/*.md  — research documents
+#   thoughts/plans/*.md     — implementation plans
+#
+# Usage:
+#   scripts/validate-frontmatter                    # validate all thoughts/*.md
+#   scripts/validate-frontmatter file1.md file2.md  # validate specific files
+#   scripts/validate-frontmatter --staged           # validate git-staged files only
+#
+
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+
+# --- colors ---
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+# --- required fields (hardcoded standard) ---
+RESEARCH_REQUIRED_FIELDS=(date researcher topic tags status)
+PLAN_REQUIRED_FIELDS=(date author status topic)
+
+RESEARCH_VALID_STATUSES="in-progress|complete|outdated"
+PLAN_VALID_STATUSES="draft|approved|implementing|completed|archived"
+
+# --- counters ---
+TOTAL=0
+PASS=0
+FAIL=0
+WARN=0
+
+errors=()
+warnings=()
+
+# --- extract front-matter ---
+extract_frontmatter() {
+  local file="$1"
+  if head -1 "$file" | grep -q '^---$'; then
+    sed -n '2,/^---$/p' "$file" | sed '$d'
+  else
+    echo ""
+  fi
+}
+
+# --- field helpers ---
+has_field() {
+  local frontmatter="$1"
+  local field="$2"
+  echo "$frontmatter" | grep -qE "^${field}:" && return 0 || return 1
+}
+
+get_field_value() {
+  local frontmatter="$1"
+  local field="$2"
+  echo "$frontmatter" | grep -E "^${field}:" | sed "s/^${field}:[[:space:]]*//"
+}
+
+# --- validate single file ---
+validate_file() {
+  local file="$1"
+  local rel_path="${file#"$REPO_ROOT"/}"
+  local file_errors=()
+  local file_warnings=()
+
+  TOTAL=$((TOTAL + 1))
+
+  # determine document type
+  local doc_type=""
+  local required_fields=()
+  local valid_statuses=""
+
+  case "$rel_path" in
+    thoughts/research/*.md | thoughts/*/research/*.md)
+      doc_type="research"
+      required_fields=("${RESEARCH_REQUIRED_FIELDS[@]}")
+      valid_statuses="$RESEARCH_VALID_STATUSES"
+      ;;
+    thoughts/plans/*.md | thoughts/*/plans/*.md)
+      doc_type="plan"
+      required_fields=("${PLAN_REQUIRED_FIELDS[@]}")
+      valid_statuses="$PLAN_VALID_STATUSES"
+      ;;
+    *)
+      return 0
+      ;;
+  esac
+
+  # check front-matter exists
+  local fm
+  fm=$(extract_frontmatter "$file")
+
+  if [[ -z "$fm" ]]; then
+    file_errors+=("front-matter missing (--- block required)")
+    for field in "${required_fields[@]}"; do
+      file_errors+=("  missing: $field")
+    done
+  else
+    # check required fields
+    for field in "${required_fields[@]}"; do
+      if ! has_field "$fm" "$field"; then
+        file_errors+=("missing: $field")
+      else
+        local value
+        value=$(get_field_value "$fm" "$field")
+        if [[ -z "$value" || "$value" == '""' || "$value" == "''" ]]; then
+          file_errors+=("empty: $field")
+        fi
+      fi
+    done
+
+    # validate status values
+    if has_field "$fm" "status"; then
+      local status_val
+      status_val=$(get_field_value "$fm" "status")
+      if [[ ! "$status_val" =~ ^($valid_statuses)$ ]]; then
+        file_warnings+=("status '$status_val' is not one of: ${valid_statuses//|/, }")
+      fi
+    fi
+
+    # validate date format
+    if has_field "$fm" "date"; then
+      local date_val
+      date_val=$(get_field_value "$fm" "date")
+      if [[ ! "$date_val" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2} ]]; then
+        file_errors+=("date format invalid: '$date_val' (expected YYYY-MM-DD...)")
+      fi
+    fi
+
+    # validate tags format
+    if has_field "$fm" "tags"; then
+      local tags_val
+      tags_val=$(get_field_value "$fm" "tags")
+      if [[ ! "$tags_val" =~ ^\[ ]]; then
+        file_warnings+=("tags should be array format: [tag1, tag2]")
+      fi
+    fi
+  fi
+
+  # output result
+  if [[ ${#file_errors[@]} -gt 0 ]]; then
+    FAIL=$((FAIL + 1))
+    printf "  ${RED}FAIL${NC}  %s (%s)\n" "$rel_path" "$doc_type"
+    for err in "${file_errors[@]}"; do
+      printf "        ${RED}%s${NC}\n" "$err"
+      errors+=("$rel_path: $err")
+    done
+    for warn in "${file_warnings[@]}"; do
+      printf "        ${YELLOW}%s${NC}\n" "$warn"
+      warnings+=("$rel_path: $warn")
+    done
+    return 1
+  elif [[ ${#file_warnings[@]} -gt 0 ]]; then
+    WARN=$((WARN + 1))
+    PASS=$((PASS + 1))
+    printf "  ${YELLOW}WARN${NC}  %s (%s)\n" "$rel_path" "$doc_type"
+    for warn in "${file_warnings[@]}"; do
+      printf "        ${YELLOW}%s${NC}\n" "$warn"
+      warnings+=("$rel_path: $warn")
+    done
+    return 0
+  else
+    PASS=$((PASS + 1))
+    printf "  ${GREEN}OK${NC}    %s (%s)\n" "$rel_path" "$doc_type"
+    return 0
+  fi
+}
+
+# --- main ---
+echo "=== thoughts/ front-matter validation ==="
+echo ""
+echo "Research required: ${RESEARCH_REQUIRED_FIELDS[*]}"
+echo "Plan required:     ${PLAN_REQUIRED_FIELDS[*]}"
+echo ""
+
+HAS_FAILURE=0
+
+if [[ "${1:-}" == "--staged" ]]; then
+  FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^thoughts/(.*/)?(research|plans)/.*\.md$' || true)
+  if [[ -z "$FILES" ]]; then
+    echo "No staged thoughts/*.md files — skipping"
+    exit 0
+  fi
+  while IFS= read -r file; do
+    validate_file "$REPO_ROOT/$file" || HAS_FAILURE=1
+  done <<< "$FILES"
+elif [[ $# -gt 0 ]]; then
+  for file in "$@"; do
+    if [[ "$file" != /* ]]; then
+      file="$REPO_ROOT/$file"
+    fi
+    if [[ -f "$file" ]]; then
+      validate_file "$file" || HAS_FAILURE=1
+    else
+      printf "  ${RED}SKIP${NC}  %s (file not found)\n" "$file"
+    fi
+  done
+else
+  # scan all thoughts/**/research/ and thoughts/**/plans/
+  while IFS= read -r file; do
+    validate_file "$file" || HAS_FAILURE=1
+  done < <(find "$REPO_ROOT/thoughts" -type f -name '*.md' \( -path '*/research/*' -o -path '*/plans/*' \) 2>/dev/null | sort)
+fi
+
+# --- summary ---
+echo ""
+echo "=== Result: ${TOTAL} checked, ${PASS} passed, ${FAIL} failed, ${WARN} warnings ==="
+
+if [[ $HAS_FAILURE -eq 1 ]]; then
+  echo ""
+  printf "${RED}Front-matter validation failed. Add missing fields.${NC}\n"
+  exit 1
+fi

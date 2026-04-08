@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# pre-commit hook: validate thoughts/*.md front-matter
+#
+# Skip: FRONTMATTER_SKIP=1 git commit ...
+#
+
+set -euo pipefail
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# --- frontmatter validation ---
+if [[ "${FRONTMATTER_SKIP:-}" != "1" ]]; then
+  THOUGHTS_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^thoughts/(.*/)?(research|plans)/.*\.md$' || true)
+  if [[ -n "$THOUGHTS_FILES" ]]; then
+    VALIDATE_SCRIPT="$REPO_ROOT/scripts/validate-frontmatter"
+    if [[ -x "$VALIDATE_SCRIPT" ]]; then
+      echo "[frontmatter] Validating staged thoughts/*.md files..."
+      if ! "$VALIDATE_SCRIPT" --staged; then
+        echo ""
+        echo "[frontmatter] Validation failed."
+        echo "[frontmatter] Skip with: FRONTMATTER_SKIP=1 git commit ..."
+        exit 1
+      fi
+      echo "[frontmatter] Passed."
+      echo ""
+    else
+      echo "[frontmatter] WARNING: scripts/validate-frontmatter not found. Skipping."
+    fi
+  fi
+fi
