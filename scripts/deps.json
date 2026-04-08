@@ -545,10 +545,7 @@
       "label": "mise",
       "kind": "command",
       "target": "mise",
-      "depends": [
-        "homebrew"
-      ],
-      "install": "brew install mise"
+      "install": "curl https://mise.run | sh"
     },
     {
       "label": "d2coding-font",
