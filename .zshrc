@@ -53,8 +53,6 @@ source <(fzf --zsh)
 
 
 
-# direnv
-eval "$(direnv hook zsh)"
 
 # brew install tree
 

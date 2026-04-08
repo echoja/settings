@@ -50,15 +50,6 @@
       "install": "brew install fzf"
     },
     {
-      "label": "direnv",
-      "kind": "command",
-      "target": "direnv",
-      "depends": [
-        "homebrew"
-      ],
-      "install": "brew install direnv"
-    },
-    {
       "label": "zoxide",
       "kind": "command",
       "target": "zoxide",
