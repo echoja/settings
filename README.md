@@ -53,6 +53,12 @@ sudo systemsetup -f -setremotelogin on
 # Screen Sharing
 sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist
 
+# Auto restart after power loss (for headless/SSH access)
+sudo pmset -a autorestart 1
+
+# Disable FileVault (prevents pre-boot password prompt blocking SSH after power loss)
+sudo fdesetup disable
+
 # VS Code Settings Sync (built-in, requires interactive sign-in)
 # Open VS Code → Cmd+Shift+P → "Settings Sync: Turn On..."
 ```
