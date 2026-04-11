@@ -1,6 +1,6 @@
 ---
+name: create-plan
 description: Create implementation plans in thoughts/plans/ with validated frontmatter
-model: opus
 metadata:
   internal: true
 ---
