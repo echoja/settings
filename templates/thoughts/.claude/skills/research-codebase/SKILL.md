@@ -1,6 +1,8 @@
 ---
 description: Research and document codebase patterns in thoughts/research/ with validated frontmatter
 model: opus
+metadata:
+  internal: true
 ---
 
 # Research Codebase
