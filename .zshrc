@@ -238,10 +238,16 @@ if ! security find-generic-password -a "bitwarden" -s "bw-master" &>/dev/null; t
 fi
 
 function bw-unlock() {
-  if [[ -z "$BW_SESSION" ]] || ! bw unlock --check &>/dev/null; then
-    echo "Unlocking Bitwarden..."
-    export BW_SESSION=$(BW_PASSWORD=$(security find-generic-password -a "bitwarden" -s "bw-master" -w) bw unlock --raw --passwordenv BW_PASSWORD)
+  if [[ -n "$BW_SESSION" ]] && bw unlock --check &>/dev/null; then
+    return 0
   fi
+  local bw_status=$(bw status 2>/dev/null | sed -n 's/.*"status":"\([^"]*\)".*/\1/p')
+  if [[ "$bw_status" == "unauthenticated" ]]; then
+    echo "⚠ Bitwarden is not logged in. Run: bw login"
+    return 1
+  fi
+  echo "Unlocking Bitwarden..."
+  export BW_SESSION=$(BW_PASSWORD=$(security find-generic-password -a "bitwarden" -s "bw-master" -w) bw unlock --raw --passwordenv BW_PASSWORD)
 }
 
 # passbolt CLI automation (passphrase + private key from Bitwarden, cached in env)
