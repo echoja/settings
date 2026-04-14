@@ -238,6 +238,11 @@ if ! security find-generic-password -a "bitwarden" -s "bw-master" &>/dev/null; t
 fi
 
 function bw-unlock() {
+  if ! security find-generic-password -a "bitwarden" -s "bw-master" &>/dev/null; then
+    echo "⚠ Bitwarden master password not in Keychain. Run:"
+    echo '  security add-generic-password -a "bitwarden" -s "bw-master" -w'
+    return 1
+  fi
   if [[ -n "$BW_SESSION" ]] && bw unlock --check &>/dev/null; then
     return 0
   fi
