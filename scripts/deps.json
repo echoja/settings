@@ -338,16 +338,13 @@
       "label": "docker",
       "kind": "dir",
       "target": "/Applications/Docker.app",
-      "depends": [
-        "homebrew"
-      ],
-      "install": "brew install --cask docker"
+      "install": "curl -L -o ~/Downloads/Docker.dmg https://desktop.docker.com/mac/main/arm64/Docker.dmg && hdiutil attach ~/Downloads/Docker.dmg -nobrowse -quiet && sudo ditto /Volumes/Docker/Docker.app /Applications/Docker.app && hdiutil detach /Volumes/Docker -quiet  # upstream guidance: https://docs.docker.com/desktop/setup/install/mac-install/ (brew cask ships older build)"
     },
     {
-      "label": "podman",
+      "label": "rosetta",
       "kind": "file",
-      "target": "/opt/podman/bin/podman",
-      "install": "Download the .pkg installer from https://podman.io/docs/installation (brew install is discouraged by upstream)"
+      "target": "/Library/Apple/usr/share/rosetta/rosetta",
+      "install": "softwareupdate --install-rosetta --agree-to-license"
     },
     {
       "label": "kind",

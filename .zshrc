@@ -128,9 +128,6 @@ alias tf="terraform"
 # mysql
 export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
 
-# podman (installed via official .pkg installer to /opt/podman/bin)
-export PATH="/opt/podman/bin:$PATH"
-
 # ls 더 나은 버전
 # brew install eza
 # alias ls="eza"
