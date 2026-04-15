@@ -93,12 +93,12 @@
     },
     {
       "label": "kubectx",
-      "kind": "file",
-      "target": "$HOME/.krew/bin/kubectl-ctx",
+      "kind": "command",
+      "target": "kubectx",
       "depends": [
-        "krew"
+        "homebrew"
       ],
-      "install": "https://github.com/ahmetb/kubectx"
+      "install": "brew install kubectx"
     },
     {
       "label": "krew",

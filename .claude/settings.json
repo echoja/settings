@@ -53,7 +53,8 @@
     "typescript-lsp@claude-plugins-official": true,
     "ralph-loop@claude-plugins-official": false,
     "context7@claude-plugins-official": true,
-    "rust-analyzer-lsp@claude-plugins-official": true
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true
   },
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true

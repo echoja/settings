@@ -107,6 +107,9 @@ trust_level = "trusted"
 [projects."/Users/th.kim/codenbutter-knowledge-base"]
 trust_level = "trusted"
 
+[projects."/Users/echoja/works/springfall-astro"]
+trust_level = "trusted"
+
 [mcp_servers.chrome-devtools]
 command = "npx"
 args = ["chrome-devtools-mcp@latest"]
@@ -134,6 +137,9 @@ hide_gpt5_1_migration_prompt = true
 network_access = true
 
 [plugins."canva@openai-curated"]
+enabled = true
+
+[plugins."github@openai-curated"]
 enabled = true
 
 
