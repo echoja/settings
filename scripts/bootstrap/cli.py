@@ -125,6 +125,9 @@ def verify() -> None:
             hint = f" ({', '.join(hints)})" if hints else ""
             console.print(f"[red]MISSING[/red] {label} - {kind}: {target}{hint}")
             fail += 1
+
+        for note in check.get("notes", []):
+            console.print(f"        [yellow]note:[/yellow] [dim]{note}[/dim]")
     console.print()
 
     # 3. JSON schema validation

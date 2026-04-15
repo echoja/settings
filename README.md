@@ -63,17 +63,10 @@ sudo defaults write /Library/Preferences/com.apple.loginwindow autoLoginUser ech
 # Open VS Code → Cmd+Shift+P → "Settings Sync: Turn On..."
 ```
 
-## Container runtime
+## Source of truth
 
-이 맥의 컨테이너 런타임은 **Docker Desktop** 입니다 (DMG 직접 설치; `scripts/deps.json`의 `docker` 엔트리 참조). Apple Silicon에서 amd64 이미지를 돌리기 위해 Rosetta 2도 함께 설치해 둡니다.
-
-### 의도적으로 쓰지 않는 것들
-
-- **Podman (`podman machine`)** — krunkit VM이 `cpuset` cgroup을 delegate 하지 않아 k3d/k3s가 bootstrap 단계에서 `fatal: failed to find cpuset cgroup (v2)`로 죽습니다. Kind는 돌지만 생태계 전반의 호환성이 떨어져 제외했습니다.
-- **Colima** — Docker Desktop이 같은 워크로드를 first-party로 처리해 별도 VM 매니저가 필요 없습니다. "대시보드를 띄우지 않는 진짜 헤드리스" 용도일 땐 고려 대상이지만, 현재는 불필요.
-- **Lima 직접 사용** — Colima/Rancher Desktop이 상위 래퍼로 충분.
-- **`brew install --cask docker`** — 공식 `.dmg` 채널이 최신 빌드이며 Docker 측 권장 경로입니다.
-- **`brew install k3d`의 실제 cluster 생성** — k3d 바이너리는 설치돼 있어도 (관성) Podman 기반에서는 위의 cgroup 이슈로 동작 불가. Docker Desktop으로 전환한 지금은 사용 가능합니다.
+- 설치 대상·설치 명령·사용/비사용 이유는 전부 `scripts/deps.json`이 단일 기준입니다. `./v`가 각 엔트리의 `install`과 `notes`를 출력하므로, 이 README는 "어디를 봐야 하는지"만 가리키도록 유지합니다.
+- 예: 컨테이너 런타임 선택(왜 Docker Desktop인지, 왜 podman/colima를 설치하지 말아야 하는지)은 `docker` 엔트리의 `notes`에 담겨 있습니다.
 
 ## Pre-commit
 

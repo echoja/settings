@@ -338,7 +338,14 @@
       "label": "docker",
       "kind": "dir",
       "target": "/Applications/Docker.app",
-      "install": "curl -L -o ~/Downloads/Docker.dmg https://desktop.docker.com/mac/main/arm64/Docker.dmg && hdiutil attach ~/Downloads/Docker.dmg -nobrowse -quiet && sudo ditto /Volumes/Docker/Docker.app /Applications/Docker.app && hdiutil detach /Volumes/Docker -quiet && sudo /Applications/Docker.app/Contents/MacOS/install --accept-license --user=$USER  # headless first-run: accepts DSL and wires the privileged helper; upstream https://docs.docker.com/desktop/setup/install/mac-install/"
+      "install": "curl -L -o ~/Downloads/Docker.dmg https://desktop.docker.com/mac/main/arm64/Docker.dmg && hdiutil attach ~/Downloads/Docker.dmg -nobrowse -quiet && sudo ditto /Volumes/Docker/Docker.app /Applications/Docker.app && hdiutil detach /Volumes/Docker -quiet && sudo /Applications/Docker.app/Contents/MacOS/install --accept-license --user=$USER  # headless first-run: accepts DSL and wires the privileged helper; upstream https://docs.docker.com/desktop/setup/install/mac-install/",
+      "notes": [
+        "Docker Desktop is the chosen container runtime on this machine.",
+        "Do NOT install podman/podman-machine \u2014 its krunkit VM does not delegate the cpuset cgroup, which breaks k3d/k3s at bootstrap (fatal: failed to find cpuset cgroup v2).",
+        "Do NOT install colima/rancher-desktop/lima as parallel runtimes unless you have a specific headless use case; Docker Desktop covers the same workload first-party.",
+        "Do NOT use 'brew install --cask docker' \u2014 it ships an older build than the direct .dmg channel (see the install field).",
+        "To start the engine without opening the dashboard window: `docker desktop start`."
+      ]
     },
     {
       "label": "rosetta",
