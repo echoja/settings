@@ -350,6 +350,15 @@
       "install": "Download the .pkg installer from https://podman.io/docs/installation (brew install is discouraged by upstream)"
     },
     {
+      "label": "kind",
+      "kind": "command",
+      "target": "kind",
+      "depends": [
+        "homebrew"
+      ],
+      "install": "brew install kind"
+    },
+    {
       "label": "iterm",
       "kind": "dir",
       "target": "/Applications/iTerm.app",
