@@ -344,6 +344,12 @@
       "install": "brew install --cask docker"
     },
     {
+      "label": "podman",
+      "kind": "file",
+      "target": "/opt/podman/bin/podman",
+      "install": "Download the .pkg installer from https://podman.io/docs/installation (brew install is discouraged by upstream)"
+    },
+    {
       "label": "iterm",
       "kind": "dir",
       "target": "/Applications/iTerm.app",
