@@ -338,7 +338,7 @@
       "label": "docker",
       "kind": "dir",
       "target": "/Applications/Docker.app",
-      "install": "curl -L -o ~/Downloads/Docker.dmg https://desktop.docker.com/mac/main/arm64/Docker.dmg && hdiutil attach ~/Downloads/Docker.dmg -nobrowse -quiet && sudo ditto /Volumes/Docker/Docker.app /Applications/Docker.app && hdiutil detach /Volumes/Docker -quiet  # upstream guidance: https://docs.docker.com/desktop/setup/install/mac-install/ (brew cask ships older build)"
+      "install": "curl -L -o ~/Downloads/Docker.dmg https://desktop.docker.com/mac/main/arm64/Docker.dmg && hdiutil attach ~/Downloads/Docker.dmg -nobrowse -quiet && sudo ditto /Volumes/Docker/Docker.app /Applications/Docker.app && hdiutil detach /Volumes/Docker -quiet && sudo /Applications/Docker.app/Contents/MacOS/install --accept-license --user=$USER  # headless first-run: accepts DSL and wires the privileged helper; upstream https://docs.docker.com/desktop/setup/install/mac-install/"
     },
     {
       "label": "rosetta",
