@@ -129,9 +129,9 @@
       "kind": "command",
       "target": "codex",
       "depends": [
-        "homebrew"
+        "npm"
       ],
-      "install": "brew install --cask codex"
+      "install": "npm install -g @openai/codex"
     },
     {
       "label": "terraform",
@@ -194,10 +194,22 @@
       "install": "https://pip.pypa.io/en/stable/installation/"
     },
     {
+      "label": "node",
+      "kind": "command",
+      "target": "node",
+      "depends": [
+        "mise"
+      ],
+      "install": "mise use -g node@lts"
+    },
+    {
       "label": "npm",
       "kind": "command",
       "target": "npm",
-      "install": "https://nodejs.org/"
+      "depends": [
+        "node"
+      ],
+      "install": "mise use -g node@lts"
     },
     {
       "label": "mysql-client",

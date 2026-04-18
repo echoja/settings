@@ -110,19 +110,19 @@ trust_level = "trusted"
 [projects."/Users/echoja/works/springfall-astro"]
 trust_level = "trusted"
 
+[projects."/Users/echoja/works/english-punch-app"]
+trust_level = "trusted"
+
+[projects."/Users/echoja/works/buildtalk"]
+trust_level = "trusted"
+
+[projects."/Users/echoja/settings"]
+trust_level = "trusted"
+
 [mcp_servers.chrome-devtools]
 command = "npx"
-args = ["chrome-devtools-mcp@latest"]
-startup_timeout_sec = 60.0
-
-[mcp_servers.asana]
-command = "npx"
-args = ["mcp-remote", "https://mcp.asana.com/sse"]
-startup_timeout_sec = 60.0
-
-
-# [mcp_servers.asana]
-# url = "https://mcp.asana.com/sse"
+args = [ "chrome-devtools-mcp@latest", "--autoConnect" ]
+startup_timeout_sec = 60
 
 [notice]
 hide_gpt5_1_migration_prompt = true
@@ -141,6 +141,3 @@ enabled = true
 
 [plugins."github@openai-curated"]
 enabled = true
-
-
-

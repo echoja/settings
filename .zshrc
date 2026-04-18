@@ -109,7 +109,7 @@ alias p="pnpm"
 alias c="curlie"
 
 # codex
-# brew install codex
+# npm install -g @openai/codex
 alias cdx="codex --yolo"
 
 # source
