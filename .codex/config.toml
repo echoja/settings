@@ -119,6 +119,9 @@ trust_level = "trusted"
 [projects."/Users/echoja/settings"]
 trust_level = "trusted"
 
+[projects."/Users/echoja/works"]
+trust_level = "trusted"
+
 [mcp_servers.chrome-devtools]
 command = "npx"
 args = [ "chrome-devtools-mcp@latest", "--autoConnect" ]

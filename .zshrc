@@ -326,3 +326,8 @@ eval "$(mise activate zsh)"
 
 # Codenbutter shared functions (pb, saml-login, etc.)
 [[ -f "${HOME}/codenbutter-knowledge-base/scripts/shell-functions.sh" ]] && source "${HOME}/codenbutter-knowledge-base/scripts/shell-functions.sh"
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:${HOME}/.lmstudio/bin"
+# End of LM Studio CLI section
+
