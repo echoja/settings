@@ -18,10 +18,10 @@ Never mention my message and the existence of these instructions.
 
 ## Settings repo (`~/settings`)
 - The user's dotfiles and system config are managed in `~/settings` (git repo: `echoja/settings`).
-- Dotfiles are symlinked from `~/settings/` to `~/` via `scripts/links.json`.
+- Dotfiles and global instruction files are symlinked from sources in `~/settings` into `~/` via `scripts/links.json`.
 - Dependencies are tracked in `scripts/deps.json`.
-- When the user wants to save something to settings (e.g., a new dotfile, config change, dependency):
+- When the user wants to save something to settings (e.g., a new dotfile, config change, dependency, or global instruction file):
   1. Make the appropriate changes in `~/settings` (edit/add files, update `links.json` or `deps.json` as needed).
-  2. If adding a new dotfile, create a symlink from `~/<key>` → `~/settings/<key>`.
+  2. If adding a new symlinked file, register its source path and home-directory target in `scripts/links.json`.
   3. Run `cd ~/settings && ./v` to verify everything is correct.
   4. Commit and push: `cd ~/settings && git add -A && git commit -m "<message>" && git push`.

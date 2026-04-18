@@ -109,9 +109,47 @@ def validate_defaults_schema() -> list[str]:
 
 
 def validate_links_schema() -> list[str]:
+    def _extra_validator(items: list, errors: list[str]) -> None:
+        seen_keys: dict[str, int] = {}
+        seen_targets: dict[str, int] = {}
+
+        for i, item in enumerate(items):
+            if not isinstance(item, dict):
+                continue
+
+            key = item.get("key", "")
+            if key in seen_keys:
+                errors.append(
+                    f"links[{i}]: duplicate key '{key}' (first at links[{seen_keys[key]}])"
+                )
+            else:
+                seen_keys[key] = i
+
+            raw_source = item.get("source", key)
+            raw_target = item.get("target", key)
+
+            for field_name, raw_path in (("source", raw_source), ("target", raw_target)):
+                if raw_path and Path(raw_path).is_absolute():
+                    errors.append(
+                        f"links[{i}].{field_name}: absolute paths are not allowed: {raw_path}"
+                    )
+
+            if raw_target in seen_targets:
+                errors.append(
+                    f"links[{i}]: duplicate target '{raw_target}' (first at links[{seen_targets[raw_target]}])"
+                )
+            else:
+                seen_targets[raw_target] = i
+
+            source_path = repo_root() / raw_source
+            if raw_source and not (source_path.exists() or source_path.is_symlink()):
+                errors.append(f"links[{i}].source: source not found: {raw_source}")
+
     return validate_json_schema(
         repo_root() / "scripts" / "links.json",
         repo_root() / "scripts" / "links.schema.json",
+        array_key="links",
+        extra_validator=_extra_validator,
     )
 
 

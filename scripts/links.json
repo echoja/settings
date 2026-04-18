@@ -10,6 +10,12 @@
       "description": "Codex CLI config"
     },
     {
+      "key": "AGENTS.md",
+      "source": ".codex/global/AGENTS.md",
+      "target": "AGENTS.md",
+      "description": "User-scope Codex instructions"
+    },
+    {
       "key": ".claude/settings.json",
       "description": "Claude Code settings"
     },

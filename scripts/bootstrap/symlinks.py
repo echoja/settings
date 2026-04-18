@@ -27,6 +27,14 @@ class LinkItem:
     target: Path
 
 
+def source_path_for(item: dict[str, str], root: Path) -> Path:
+    return root / item.get("source", item["key"])
+
+
+def target_path_for(item: dict[str, str], home: Path) -> Path:
+    return home / item.get("target", item["key"])
+
+
 def load_link_items() -> list[LinkItem]:
     links_file = repo_root() / "scripts" / "links.json"
     with open(links_file, encoding="utf-8") as f:
@@ -36,10 +44,10 @@ def load_link_items() -> list[LinkItem]:
     return [
         LinkItem(
             key=item["key"],
-            title=item["key"],
+            title=item.get("target", item["key"]),
             description=item["description"],
-            source=root / item["key"],
-            target=home / item["key"],
+            source=source_path_for(item, root),
+            target=target_path_for(item, home),
         )
         for item in data["links"]
     ]
