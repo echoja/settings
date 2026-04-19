@@ -212,6 +212,39 @@
       "install": "mise use -g node@lts"
     },
     {
+      "label": "bun",
+      "kind": "command",
+      "target": "bun",
+      "depends": [
+        "mise"
+      ],
+      "install": "mise use -g bun@latest"
+    },
+    {
+      "label": "rustup",
+      "kind": "command",
+      "target": "rustup",
+      "install": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+    },
+    {
+      "label": "cargo",
+      "kind": "command",
+      "target": "cargo",
+      "depends": [
+        "rustup"
+      ],
+      "install": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+    },
+    {
+      "label": "rustc",
+      "kind": "command",
+      "target": "rustc",
+      "depends": [
+        "rustup"
+      ],
+      "install": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+    },
+    {
       "label": "mysql-client",
       "kind": "dir",
       "target": "/opt/homebrew/opt/mysql-client/bin",

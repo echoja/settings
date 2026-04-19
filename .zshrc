@@ -25,6 +25,10 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # If you come from bash you might have to change your $PATH.
 export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
+case ":$PATH:" in
+  *:"$HOME/.local/share/mise/shims":*) ;;
+  *) export PATH="$HOME/.local/share/mise/shims:$PATH" ;;
+esac
 
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -288,9 +292,6 @@ export GPG_TTY=$(tty)
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 
-# Added by Windsurf
-export PATH="$HOME/.codeium/windsurf/bin:$PATH"
-
 # mcp-proxy (The mcp-proxy is a tool that lets you switch between server transports.)
 # installation: uv tool install mcp-proxy
 # url: https://github.com/sparfenyuk/mcp-proxy
@@ -307,14 +308,6 @@ case ":$PATH:" in
 esac
 # pnpm end
 
-# bun completions
-[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
-
 # Added by Antigravity
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
@@ -323,6 +316,7 @@ export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 [[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh"
 
 eval "$(mise activate zsh)"
+[[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
 
 # Codenbutter shared functions (pb, saml-login, etc.)
 [[ -f "${HOME}/codenbutter-knowledge-base/scripts/shell-functions.sh" ]] && source "${HOME}/codenbutter-knowledge-base/scripts/shell-functions.sh"
@@ -330,4 +324,3 @@ eval "$(mise activate zsh)"
 # Added by LM Studio CLI (lms)
 export PATH="$PATH:${HOME}/.lmstudio/bin"
 # End of LM Studio CLI section
-

@@ -6,6 +6,10 @@
       "description": "Zsh config"
     },
     {
+      "key": ".zprofile",
+      "description": "Zsh login profile"
+    },
+    {
       "key": ".codex/config.toml",
       "description": "Codex CLI config"
     },
