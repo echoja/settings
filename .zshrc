@@ -76,10 +76,6 @@ export PATH="/usr/local/go/bin:$(go env GOPATH)/bin:$PATH"
 # vscode shell integration
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
 
-# aws with purple io
-export AWS_PROFILE=purpleio-dev
-export AWS_REGION=ap-northeast-2
-
 # cinesopa
 alias ssh-cinesopa="ssh -i ~/LightsailDefaultKey-ap-northeast-ezkorry.pem bitnami@13.209.62.19"
 export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
