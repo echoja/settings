@@ -2,7 +2,6 @@
 # Auto-attach to tmux on SSH (before p10k to avoid stdout redirection issues)
 if [[ -n "$SSH_CONNECTION" ]] && [[ -z "$TMUX" ]] && command -v tmux &>/dev/null; then
   tmux attach -t remote 2>/dev/null || tmux new -s remote
-  exit
 fi
 
 # Kiro CLI pre block. Keep at the top of this file.
