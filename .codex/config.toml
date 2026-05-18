@@ -125,6 +125,17 @@ trust_level = "trusted"
 [projects."/Users/echoja/works/olmocr-workspace"]
 trust_level = "trusted"
 
+[projects."/Users/tate-kim-mp"]
+trust_level = "trusted"
+
+[projects."/Users/tate-kim-mp/pyloncloud"]
+trust_level = "trusted"
+
+[mcp_servers.playwright]
+command = "npx"
+args = [ "@playwright/mcp@latest" ]
+startup_timeout_sec = 60
+
 [notice]
 hide_gpt5_1_migration_prompt = true
 "hide_gpt-5.1-codex-max_migration_prompt" = true

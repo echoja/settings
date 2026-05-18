@@ -266,7 +266,7 @@
       "depends": [
         "homebrew"
       ],
-      "install": "brew install choose"
+      "install": "brew install choose-rust"
     },
     {
       "label": "raycast",
