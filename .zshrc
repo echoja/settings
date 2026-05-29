@@ -167,6 +167,14 @@ function gfdp() {
 
 
 
+# git fetch --prune 후 upstream 이 사라진(: gone) 로컬 브랜치 정리
+function gfpc() {
+  git fetch --prune
+  echo '--- gone branches ---'
+  git branch -vv | grep ': gone]'
+  git branch -vv | awk '/: gone]/{print $1}' | xargs -r git branch -d
+}
+
 # git pull
 function glm() {
   echo 'git pull origin $(git_main_branch) --no-rebase --no-edit' && git pull origin $(git_main_branch) --no-rebase --no-edit
