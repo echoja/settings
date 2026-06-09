@@ -20,6 +20,10 @@
       "description": "User-scope Codex instructions"
     },
     {
+      "key": ".agents/skills/english-punch",
+      "description": "English Punch Codex skill"
+    },
+    {
       "key": ".claude/settings.json",
       "description": "Claude Code settings"
     },
