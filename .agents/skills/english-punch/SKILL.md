@@ -37,10 +37,10 @@ Before using any `ep` tool, check the environment:
    user's bags with `ep bags list --json _id,name`, ask them which
    one to use, and set it with `ep bags default set <id>`.
 
-Every `ep` command supports `--json` for machine-readable output and
-every error starts with an `UPPER_SNAKE_CASE` token you can
-pattern-match on (see `docs/cli-llm-as-caller.md` in the repo for
-the full list).
+Use `ep --help` and `ep <command> --help` as the CLI source of truth.
+Prefer `--json` with explicit fields for machine-readable output; if a
+command supports field discovery, bare `--json` prints the available
+fields. Match CLI errors by their leading `UPPER_SNAKE_CASE` token.
 
 ## Creating a flashcard
 
@@ -60,18 +60,16 @@ action is for the web UI only.
 
 - **`--question`** — a single fill-in-the-blank sentence with `___`
   as the only blank. The answer must be the most natural completion.
-  Strongly prefer a real, high-frequency collocation or grammatical
-  frame for the target word, such as verb+noun, adjective+noun,
-  adverb+adjective, or a common preposition pattern. Let that
-  collocation make the answer feel inevitable; do not rely on a long
-  explanation-like setup. Avoid rare, poetic, or awkward combinations
-  even if they technically fit the meaning. Match the surrounding
+  Make collocation fit the top priority: use a real, high-frequency
+  collocation or grammatical frame for the target word, such as
+  verb+noun, adjective+noun, adverb+adjective, or a common preposition
+  pattern. Let that collocation make the answer feel inevitable. Match the surrounding
   words' register and tone to the target word and context
-  (formal/informal, academic, business, casual, emotional, etc.). Do
-  not mix slang with a formal target, or stiff wording with a casual
-  target, unless the context explicitly calls for that contrast. Keep
-  the sentence simple (CEFR B1–B2), concise, and easy to memorize as a
-  whole sentence. Do not add extra background just to make the
+  (formal/informal, academic, business, casual, emotional, etc.).
+  Prefer 11–22 words, counting the blank as one word;
+  shorter is acceptable when the collocation is still natural, but
+  avoid exceeding 22 words unless the context truly requires it. Do not
+  add extra background just to make the
   sentence longer. If the user provided context, reflect the situation
   or tone naturally without explaining the context.
 
@@ -81,7 +79,35 @@ action is for the web UI only.
 
 - **`--explanation`** — 10–50 words total. Briefly say when the word
   is appropriate and, when useful, contrast one close synonym by
-  nuance, tone, or intensity. Do not repeat the hint.
+  nuance, tone, or intensity. Do not repeat the hint. If the user says
+  "description", treat it as this `explanation` field.
+
+### Generation workflow
+
+When generating or replacing `question`, `hint`, and `explanation`,
+delegate the content generation to a fresh subagent when subagent tools
+are available. Start it without conversation history and give it only:
+the answer, optional user/card context, and the field rules above.
+
+The subagent is a content generator only. It must not call `ep`, query
+Convex, edit files, or mutate any data. Ask it to return strict JSON:
+
+```json
+{
+  "question": "... ___ ...",
+  "hint": "...",
+  "explanation": "..."
+}
+```
+
+The parent agent validates the result before saving: exactly one `___`,
+8–22 question words unless context truly requires otherwise, natural
+collocation prioritized over easy vocabulary, answer is the best
+completion, hint is under 12 words and does not contain the answer, and
+explanation is 10–50 words. If the
+result is weak, ask a fresh subagent for a new draft or revise only minor
+issues locally. The parent agent alone calls `ep cards create` or
+`ep cards replace` and confirms the saved card.
 
 ### Call shape
 
@@ -102,6 +128,24 @@ For scripted use add `--json` — success returns
 If the call fails with `NOT_LOGGED_IN` or `NO_DEFAULT_BAG`, rerun the
 relevant Prerequisites step — do not auto-retry `cards create` on
 `NOT_LOGGED_IN`, since only the user can complete `ep auth login`.
+
+## Finding and replacing cards
+
+With `ep` 0.3.4 or newer, use `ep cards list` to find cards inside a
+bag before replacing them. It mirrors the web card list:
+
+```bash
+ep cards list --bag <bag-id> --search "precision" --json page,count,isDone,continueCursor
+ep cards list --bag <bag-id> --limit 50 --cursor <continueCursor> --json page,continueCursor,isDone
+```
+
+`--search` uses the web app's answer search index only; it does not
+search questions, hints, explanations, or arbitrary text. The response
+contains `page` with card objects whose IDs are in `_id`, plus
+`continueCursor` and `isDone` for pagination. Once the target `_id` is
+known, call `ep cards get <card-id> --bag <bag-id> --json` before
+`ep cards replace`. Remember that `ep cards replace` resets the card's
+FSRS schedule.
 
 ## Reviewing flashcards (planned)
 
@@ -138,6 +182,5 @@ sessions.
 
 ## References
 
-- CLI rule set: `docs/cli-llm-as-caller.md`
 - `ep` source: https://github.com/englishpunch/english-punch-app/tree/main/cli
 - Server-side AI rules we mirror: `convex/ai.ts`
